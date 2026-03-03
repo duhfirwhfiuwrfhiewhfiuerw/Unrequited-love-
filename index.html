@@ -70,14 +70,13 @@ button{
 // =====================
 const face={
 
-normal:`data:image/svg+xml;utf8,
-<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64' shape-rendering='crispEdges'>
-<rect width='64' height='64' fill='#ffe4ec'/>
-<rect x='20' y='20' width='8' height='8' fill='#000'/>
-<rect x='36' y='20' width='8' height='8' fill='#000'/>
-<rect x='24' y='36' width='16' height='4' fill='#000'/>
-</svg>`,
+normal:"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' shape-rendering='crispEdges'%3E%3Crect width='64' height='64' fill='%23ffe4ec'/%3E%3Crect x='20' y='20' width='8' height='8' fill='black'/%3E%3Crect x='36' y='20' width='8' height='8' fill='black'/%3E%3Crect x='24' y='36' width='16' height='4' fill='black'/%3E%3C/svg%3E",
 
+happy:"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' shape-rendering='crispEdges'%3E%3Crect width='64' height='64' fill='%23ffc0cb'/%3E%3Crect x='20' y='20' width='8' height='8' fill='black'/%3E%3Crect x='36' y='20' width='8' height='8' fill='black'/%3E%3Crect x='20' y='36' width='24' height='6' fill='%23ff1493'/%3E%3C/svg%3E",
+
+cold:"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' shape-rendering='crispEdges'%3E%3Crect width='64' height='64' fill='%23d0e7ff'/%3E%3Crect x='20' y='20' width='8' height='8' fill='black'/%3E%3Crect x='36' y='20' width='8' height='8' fill='black'/%3E%3Crect x='24' y='40' width='16' height='4' fill='black'/%3E%3C/svg%3E"
+
+};
 happy:`data:image/svg+xml;utf8,
 <svg xmlns='http://www.w3.org/2000/svg' width='64' height='64' shape-rendering='crispEdges'>
 <rect width='64' height='64' fill='#ffc0cb'/>
@@ -157,10 +156,25 @@ function updateFace(){
  else char.style.backgroundImage=`url(${face.normal})`;
 }
 function updateBg(){
- bg.style.backgroundImage=`url(${days[day].bg})`;
- bg.style.filter=hour>=18?"brightness(0.5)":"brightness(1)";
-}
 
+ let skyColor;
+
+ if(hour < 15) skyColor = "%2387ceeb";
+ else if(hour < 18) skyColor = "%23ffb347";
+ else if(hour < 20) skyColor = "%23c77dff";
+ else skyColor = "%230b1d3a";
+
+ bg.style.backgroundImage =
+ "url(\"data:image/svg+xml," +
+ "%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='180' shape-rendering='crispEdges'%3E" +
+ "%3Crect width='400' height='180' fill='" + skyColor + "'/%3E" +
+ "%3Crect y='100' width='400' height='80' fill='%238b5a2b'/%3E" +
+ "%3Crect x='20' y='30' width='120' height='60' fill='white' stroke='black' stroke-width='4'/%3E" +
+ "%3Crect x='260' y='30' width='120' height='60' fill='white' stroke='black' stroke-width='4'/%3E" +
+ "%3Crect x='160' y='50' width='80' height='50' fill='%23228b22'/%3E" +
+ "%3C/svg%3E\")";
+
+}
 // =====================
 function show(){
  const cur=days[day].questions[q];
