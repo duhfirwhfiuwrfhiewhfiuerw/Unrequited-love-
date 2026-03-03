@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>Can You Win Jisoo’s Heart?</title>
+
+<style>
+body{
+  margin:0;
+  background:#111;
+  color:#fff;
+  font-family:monospace;
+  text-align:center;
+}
+.game{
+  width:380px;
+  margin:20px auto;
+  border:4px solid #ff69b4;
+  padding:10px;
+}
+.top{
+  display:flex;
+  justify-content:space-between;
+  font-size:12px;
+}
+.bg{
+  width:100%;
+  height:180px;
+  margin:6px 0;
+  background-size:100% 100%;
+  image-rendering:pixelated;
+  transition:filter 1s;
+}
+.char{
+  width:64px;
+  height:64px;
+  margin:6px auto;
+  background-size:100% 100%;
+  image-rendering:pixelated;
+}
+button{
+  width:100%;
+  margin:5px 0;
+  padding:8px;
+  cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div class="game">
+  <div class="top">
+    <span id="day">DAY 1</span>
+    <span id="time">12:00</span>
+  </div>
+
+  <h3 id="heart">❤️ 50%</h3>
+
+  <div class="bg" id="bg"></div>
+  <div class="char" id="char"></div>
+
+  <p id="text"></p>
+  <div id="choices"></div>
+</div>
+
+<script>
+// =====================
+// 캐릭터 표정
+// =====================
+const face={
+ normal:"https://raw.githubusercontent.com/nostalgic-css/NES.css/master/docs/img/characters/mario.png",
+ happy:"https://raw.githubusercontent.com/nostalgic-css/NES.css/master/docs/img/characters/mario-happy.png",
+ cold:"https://raw.githubusercontent.com/nostalgic-css/NES.css/master/docs/img/characters/mario-angry.png"
+};
+
+// =====================
+// 질문 70개 (DAY 1~7)
+// =====================
+const days=[...Array(7)].map((_,d)=>({
+ bg:"https://i.imgur.com/ZK4qZ9M.png",
+ questions:[...Array(10)].map((_,i)=>({
+  q:`DAY ${d+1} · 지수가 ${[
+   "말이 없다",
+   "조용히 웃는다",
+   "피곤해 보인다",
+   "미래 얘기를 꺼낸다",
+   "연락이 느리다",
+   "혼자 있으려 한다",
+   "감정이 복잡해 보인다",
+   "고민이 있는 것 같다",
+   "표정이 굳어 있다",
+   "평소보다 차분하다"
+  ][i]}.`,
+  a:[
+   {t:"조용히 옆에 있어준다",v:+10},
+   {t:"이유를 캐묻는다",v:-15},
+   {t:"신경 안 쓰는 척한다",v:-10}
+  ]
+ }))
+}));
+
+// =====================
+// 상태 변수
+// =====================
+let day=0, q=0;
+let heart=50;
+let hour=12, min=0;
+
+const bg=document.getElementById("bg");
+const char=document.getElementById("char");
+const text=document.getElementById("text");
+const choices=document.getElementById("choices");
+
+// =====================
+function updateClock(){
+ document.getElementById("day").innerText=`DAY ${day+1}`;
+ document.getElementById("time").innerText=
+ `${String(hour).padStart(2,"0")}:${String(min).padStart(2,"0")}`;
+}
+function addTime(){
+ min+=40;
+ if(min>=60){hour++; min-=60;}
+}
+function updateFace(){
+ if(heart>=70) char.style.backgroundImage=`url(${face.happy})`;
+ else if(heart<30) char.style.backgroundImage=`url(${face.cold})`;
+ else char.style.backgroundImage=`url(${face.normal})`;
+}
+function updateBg(){
+ bg.style.backgroundImage=`url(${days[day].bg})`;
+ bg.style.filter=hour>=18?"brightness(0.5)":"brightness(1)";
+}
+
+// =====================
+function show(){
+ const cur=days[day].questions[q];
+ text.innerText=cur.q;
+ choices.innerHTML="";
+ cur.a.forEach(c=>{
+  const b=document.createElement("button");
+  b.innerText=c.t;
+  b.onclick=()=>choose(c.v);
+  choices.appendChild(b);
+ });
+ updateClock();
+ updateFace();
+ updateBg();
+}
+
+// =====================
+function choose(v){
+ heart+=v;
+ if(heart>100) heart=100;
+ if(heart<0) heart=0;
+ document.getElementById("heart").innerText=`❤️ ${heart}%`;
+
+ addTime();
+ q++;
+
+ if(q===10){
+  day++; q=0;
+  hour=12; min=0;
+ }
+
+ if(day===7) end();
+ else show();
+}
+
+// =====================
+function end(){
+ choices.innerHTML="";
+ if(heart>=70){
+  text.innerText="💞 지수는 너를 좋아하게 되었다";
+ }else if(heart>=30){
+  text.innerText="🤍 애매한 사이로 남았다";
+ }else{
+  text.innerText="🧊 지수는 마음을 닫았다";
+ }
+ updateFace();
+}
+
+// 시작
+show();
+</script>
+
+</body>
+</html>
