@@ -9,23 +9,16 @@
         body { margin: 0; background: #fff3f6; font-family: 'DungGeunMo', monospace; display: flex; flex-direction: column; align-items: center; padding: 20px 0; }
         canvas { width: 100%; max-width: 500px; background: #fdf6f0; border: 3px solid #e8cfcf; image-rendering: pixelated; border-radius: 10px; }
 
-        /* ✨ 하이라이트: 업그레이드된 텍스트박스 디자인 */
+        /* ✨ 텍스트박스 디자인 */
         #textBox {
             width: 95%;
             max-width: 500px;
             min-height: 130px;
             margin-top: 20px;
             padding: 22px;
-            
-            /* 다이어리 느낌의 핑크 그라데이션 */
             background: linear-gradient(135deg, #ffffff 0%, #fff5f7 100%);
-            
-            /* 이중 테두리 효과 */
             border: 4px solid #e8cfcf;
-            box-shadow: 
-                inset 0 0 0 2px #ffffff, /* 안쪽 흰색 선 */
-                5px 5px 0px rgba(232, 207, 207, 0.5); /* 바깥쪽 입체 그림자 */
-            
+            box-shadow: inset 0 0 0 2px #ffffff, 5px 5px 0px rgba(232, 207, 207, 0.5);
             border-radius: 15px;
             box-sizing: border-box;
             line-height: 1.8;
@@ -35,7 +28,6 @@
             word-break: keep-all;
         }
 
-        /* 오른쪽 하단 깜빡이는 아이콘 */
         #textBox::after {
             content: ' ▼';
             position: absolute;
@@ -50,11 +42,38 @@
             0%, 100% { opacity: 1; transform: translateY(0); }
             50% { opacity: 0.3; transform: translateY(2px); }
         }
+
+        /* 🎵 유튜브 브금 레이아웃 */
+        .music-player {
+            margin-top: 15px;
+            width: 95%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+        .music-label {
+            font-size: 12px;
+            color: #e8cfcf;
+        }
     </style>
 </head>
 <body>
+
 <canvas id="game"></canvas>
 <div id="textBox">지수의 방에 온걸 환영해! 캐릭터를 가구쪽으로 움직여봐 💗</div>
+
+<!-- 🎵 요청하신 음악으로 교체 완료 -->
+<div class="music-player">
+    <div class="music-label">Now Playing: 너드 - 지수(JISOO) 🎶</div>
+    <iframe width="300" height="60" 
+        src="https://www.youtube.com/embed/GYediWu_ixw?autoplay=1&loop=1&playlist=GYediWu_ixw" 
+        title="BGM" frameborder="0" 
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+        allowfullscreen>
+    </iframe>
+</div>
 
 <script>
 const canvas = document.getElementById('game');
@@ -158,7 +177,7 @@ function checkProximity() {
     objects.forEach(obj => {
         const dx = player.x - (obj.x + obj.w / 2);
         const dy = player.y - (obj.y + obj.h / 2);
-        const range = 60; 
+        const range = 65; 
 
         let isFacing = false;
         if (player.direction === "right" && dx < 0 && Math.abs(dx) < range + obj.w/2 && Math.abs(dy) < obj.h/2 + 20) isFacing = true;
@@ -177,9 +196,9 @@ function drawLabels() {
     ctx.textAlign = "center";
     objects.forEach(obj => {
         const labelY = obj.y + obj.h + 15;
-        ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
+        ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
         ctx.fillRect(obj.x + obj.w/2 - 20, labelY - 12, 40, 16);
-        ctx.fillStyle = "#888"; 
+        ctx.fillStyle = "#b5a3a3"; 
         ctx.fillText(obj.label, obj.x + obj.w/2, labelY);
     });
 }
