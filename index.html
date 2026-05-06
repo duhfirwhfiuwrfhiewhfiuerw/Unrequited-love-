@@ -8,17 +8,14 @@
     <style>
         body { margin: 0; background: #fff3f6; font-family: 'DungGeunMo', monospace; display: flex; flex-direction: column; align-items: center; padding: 10px 0; touch-action: manipulation; overflow-x: hidden; }
         canvas { width: 95%; max-width: 500px; background: #fdf6f0; border: 3px solid #e8cfcf; image-rendering: pixelated; border-radius: 10px; cursor: pointer; display: block; }
-
         #textBox {
             width: 95%; max-width: 500px; min-height: 110px; margin-top: 15px; padding: 18px;
             background: linear-gradient(135deg, #ffffff 0%, #fff5f7 100%);
             border: 4px solid #e8cfcf; box-shadow: inset 0 0 0 2px #ffffff, 5px 5px 0px rgba(232, 207, 207, 0.5);
             border-radius: 15px; box-sizing: border-box; line-height: 1.6; color: #5a4f4f; font-size: 15px; position: relative; word-break: keep-all;
         }
-
         #textBox::after { content: ' ▼'; position: absolute; bottom: 10px; right: 15px; color: #ffb6c1; font-size: 12px; animation: blink 0.8s infinite; }
         @keyframes blink { 0%, 100% { opacity: 1; transform: translateY(0); } 50% { opacity: 0.3; transform: translateY(2px); } }
-
         .music-player { margin-top: 10px; width: 95%; max-width: 500px; text-align: center; }
         .music-label { font-size: 12px; color: #e8cfcf; margin-bottom: 5px; }
         #yt-player { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
@@ -27,7 +24,7 @@
 <body>
 
 <canvas id="game"></canvas>
-<div id="textBox">지수의 방에 온걸 환영해! 캐릭터를 움직이거나 가구를 클릭해봐 💗</div>
+<div id="textBox">지수의 방에 온걸 환영해! 가구를 클릭하면 지수가 이동하며 말을 할 거야 💗</div>
 
 <div class="music-player">
     <div class="music-label">Now Playing: 동물의 숲 브금 🍃</div>
@@ -40,11 +37,9 @@
 <script>
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
-canvas.width = 500;
-canvas.height = 500;
+canvas.width = 500; canvas.height = 500;
 
 let currentMap = "room";
-
 const mapData = {
     room: {
         bg: "https://i.imgur.com/bMfMr3n.png",
@@ -93,14 +88,11 @@ function loadMap(mapName) {
     backgroundImg.src = mapData[mapName].bg;
     mapData[mapName].objects.forEach(obj => { obj.imgObj = new Image(); obj.imgObj.src = obj.img; });
     player.x = (mapName === "garden") ? 80 : 420;
-    typeText(mapName === "garden" ? "정원으로 나왔어! 공기가 좋다." : "방으로 돌아왔어.");
 }
 loadMap("room");
 
 function typeText(text) {
-    let i = 0;
-    const box = document.getElementById('textBox');
-    box.innerHTML = "";
+    let i = 0; const box = document.getElementById('textBox'); box.innerHTML = "";
     clearInterval(window.textInterval);
     window.textInterval = setInterval(() => {
         box.innerHTML += text[i++];
@@ -108,35 +100,39 @@ function typeText(text) {
     }, 30);
 }
 
+// 📱 모바일 터치 및 마우스 통합 핸들러
 canvas.addEventListener('mousedown', (e) => handleInteraction(e));
 canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleInteraction(e.touches[0]); }, {passive: false});
 
 function handleInteraction(e) {
     const rect = canvas.getBoundingClientRect();
-    const clickX = (e.clientX - rect.left) * (canvas.width / rect.width);
-    const clickY = (e.clientY - rect.top) * (canvas.height / rect.height);
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const clickX = (e.clientX - rect.left) * scaleX;
+    const clickY = (e.clientY - rect.top) * scaleY;
 
-    // 1. 문 터치 시 이동
+    // 1. 문 클릭 시 맵 이동
     const door = mapData[currentMap].door;
     if (clickX > door.x && clickX < door.x + door.w && clickY > door.y && clickY < door.y + door.h) {
         loadMap(currentMap === "room" ? "garden" : "room");
         return;
     }
 
-    // 2. 가구 클릭 여부 확인
-    let clickedObj = null;
+    // 2. 가구 클릭 여부 감지
+    let targetObj = null;
     mapData[currentMap].objects.forEach(obj => {
         if (clickX > obj.x && clickX < obj.x + obj.w && clickY > obj.y && clickY < obj.y + obj.h) {
-            clickedObj = obj;
+            targetObj = obj;
         }
     });
 
-    // 3. 이동 로직 (가구 클릭 시에도 그 방향으로 이동)
+    // 3. 이동 및 방향 설정 (클릭한 위치 기준으로 상하좌우 판단)
     let nextX = player.x;
     let nextY = player.y;
     const diffX = clickX - player.x;
     const diffY = clickY - player.y;
 
+    // X축 거리가 더 멀면 좌우 이동, Y축이 멀면 상하 이동
     if (Math.abs(diffX) > Math.abs(diffY)) {
         if (diffX > 0) { nextX += player.step; player.direction = "right"; }
         else { nextX -= player.step; player.direction = "left"; }
@@ -145,24 +141,22 @@ function handleInteraction(e) {
         else { nextY -= player.step; player.direction = "back"; }
     }
 
-    // 벽 및 가구 통과 방지
+    // 4. 경계 및 충돌 체크
     if (nextX < 40) nextX = 40; if (nextX > 460) nextX = 460;
     if (nextY < 150) nextY = 150; if (nextY > 450) nextY = 450;
 
     let canMove = true;
     mapData[currentMap].objects.forEach(obj => {
-        const padding = 10;
-        if (nextX > obj.x - padding && nextX < obj.x + obj.w + padding &&
-            nextY > obj.y - padding && nextY < obj.y + obj.h + padding) {
+        if (nextX > obj.x - 10 && nextX < obj.x + obj.w + 10 && nextY > obj.y - 10 && nextY < obj.y + obj.h + 10) {
             canMove = false;
         }
     });
 
     if (canMove) { player.x = nextX; player.y = nextY; }
 
-    // 4. 가구를 클릭했을 때만 문구 출력
-    if (clickedObj) {
-        typeText(messages[clickedObj.name]);
+    // 5. 가구를 클릭했을 때만 대사 출력
+    if (targetObj) {
+        typeText(messages[targetObj.name]);
     }
 }
 
@@ -174,7 +168,8 @@ function draw() {
     });
     const img = playerImages[player.direction];
     if (img.complete) ctx.drawImage(img, player.x - player.size / 2, player.y - player.size / 2, player.size, player.size);
-    ctx.fillStyle = "rgba(0, 0, 0, 0.4)"; ctx.fillRect(player.x - 20, player.y - 45, 40, 20);
+    
+    ctx.fillStyle = "rgba(0, 0, 0, 0.4)"; ctx.fillRect(player.x - 25, player.y - 45, 50, 20);
     ctx.fillStyle = "white"; ctx.font = "14px 'DungGeunMo'"; ctx.textAlign = "center"; ctx.fillText(player.name, player.x, player.y - 30);
     requestAnimationFrame(draw);
 }
