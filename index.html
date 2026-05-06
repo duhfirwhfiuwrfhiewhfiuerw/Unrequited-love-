@@ -24,7 +24,7 @@
 <body>
 
 <canvas id="game"></canvas>
-<div id="textBox">지수의 방에 온걸 환영해! 가구를 터치하면 지수가 그 앞으로 가서 말을 걸어줄 거야 💗</div>
+<div id="textBox">지수의 방에 온걸 환영해! 캐릭터를 가구 근처로 옮겨서 쳐다봐봐 💗</div>
 
 <div class="music-player">
     <div class="music-label">Now Playing: 동물의 숲 브금 🍃</div>
@@ -70,7 +70,7 @@ playerImages.left.src = "https://i.imgur.com/ginoxYa.png";
 playerImages.right.src = "https://i.imgur.com/Kn58OH2.png";
 
 const backgroundImg = new Image();
-let player = { x: 250, y: 280, size: 55, direction: "front", name: "지수" };
+let player = { x: 250, y: 300, size: 55, step: 100, direction: "front", name: "지수" };
 
 const messages = {
     tv: "어렸을때 티비를 자주봤어. 만화 위주로 봤었던 것같은데 요즘은 잘 안봐",
@@ -87,7 +87,7 @@ function loadMap(mapName) {
     currentMap = mapName;
     backgroundImg.src = mapData[mapName].bg;
     mapData[mapName].objects.forEach(obj => { obj.imgObj = new Image(); obj.imgObj.src = obj.img; });
-    player.x = (mapName === "garden") ? 80 : 400;
+    player.x = (mapName === "garden") ? 80 : 420;
 }
 loadMap("room");
 
@@ -100,58 +100,77 @@ function typeText(text) {
     }, 30);
 }
 
-canvas.addEventListener('mousedown', (e) => handleAction(e));
-canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleAction(e.touches[0]); }, {passive: false});
+canvas.addEventListener('mousedown', (e) => handleInteraction(e));
+canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleInteraction(e.touches[0]); }, {passive: false});
 
-function handleAction(e) {
+function handleInteraction(e) {
     const rect = canvas.getBoundingClientRect();
-    const x = (e.clientX - rect.left) * (canvas.width / rect.width);
-    const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+    const clickX = (e.clientX - rect.left) * (canvas.width / rect.width);
+    const clickY = (e.clientY - rect.top) * (canvas.height / rect.height);
 
+    // 🚪 문 터치 (이동)
     const door = mapData[currentMap].door;
-    if (x > door.x && x < door.x + door.w && y > door.y && y < door.y + door.h) {
+    if (clickX > door.x && clickX < door.x + door.w && clickY > door.y && clickY < door.y + door.h) {
         loadMap(currentMap === "room" ? "garden" : "room");
         return;
     }
 
+    // 🏠 가구 클릭 (방향만 바꾸고 체크)
     for (let obj of mapData[currentMap].objects) {
-        if (x > obj.x && x < obj.x + obj.w && y > obj.y && y < obj.y + obj.h) {
-            goToObject(obj);
+        if (clickX > obj.x && clickX < obj.x + obj.w && clickY > obj.y && clickY < obj.y + obj.h) {
+            lookAt(obj);
+            checkProximity();
             return;
         }
     }
-    
-    // 빈 바닥 클릭 시 해당 위치로 이동
-    player.x = Math.max(50, Math.min(450, x));
-    player.y = Math.max(180, Math.min(450, y));
+
+    // 🚶 바닥 클릭 (2칸씩 이동)
+    movePlayer(clickX, clickY);
+    checkProximity();
 }
 
-function goToObject(obj) {
-    const objCenterX = obj.x + obj.w / 2;
-    const objCenterY = obj.y + obj.h / 2;
-    
-    let targetX = player.x;
-    let targetY = player.y;
-    let newDir = "front";
+function lookAt(obj) {
+    const dx = (obj.x + obj.w / 2) - player.x;
+    const dy = (obj.y + obj.h / 2) - player.y;
+    if (Math.abs(dx) > Math.abs(dy)) { player.direction = dx > 0 ? "right" : "left"; }
+    else { player.direction = dy > 0 ? "front" : "back"; }
+}
 
-    // 가구의 위치에 따라 캐릭터가 서야 할 가장 가까운 좌표 계산
-    if (player.y < obj.y) { // 가구보다 위일 때 -> 가구 위쪽에 서서 아래 보기
-        targetX = objCenterX; targetY = obj.y - 40; newDir = "front";
-    } else if (player.y > obj.y + obj.h) { // 가구보다 아래일 때 -> 가구 아래쪽에 서서 위 보기
-        targetX = objCenterX; targetY = obj.y + obj.h + 40; newDir = "back";
-    } else if (player.x < obj.x) { // 가구보다 왼쪽일 때 -> 왼쪽 서서 오른쪽 보기
-        targetX = obj.x - 40; targetY = objCenterY; newDir = "right";
-    } else { // 가구보다 오른쪽일 때 -> 오른쪽 서서 왼쪽 보기
-        targetX = obj.x + obj.w + 40; targetY = objCenterY; newDir = "left";
+function movePlayer(tx, ty) {
+    let nx = player.x; let ny = player.y;
+    const dx = tx - player.x; const dy = ty - player.y;
+
+    if (Math.abs(dx) > Math.abs(dy)) {
+        nx += dx > 0 ? player.step : -player.step;
+        player.direction = dx > 0 ? "right" : "left";
+    } else {
+        ny += dy > 0 ? player.step : -player.step;
+        player.direction = dy > 0 ? "front" : "back";
     }
 
-    // 이동 및 방향 설정
-    player.x = Math.max(50, Math.min(450, targetX));
-    player.y = Math.max(180, Math.min(450, targetY));
-    player.direction = newDir;
+    // 경계 및 가구 충돌 체크
+    if (nx < 40 || nx > 460 || ny < 150 || ny > 450) return;
+    for (let obj of mapData[currentMap].objects) {
+        if (nx > obj.x - 10 && nx < obj.x + obj.w + 10 && ny > obj.y - 10 && ny < obj.y + obj.h + 10) return;
+    }
+    player.x = nx; player.y = ny;
+}
 
-    // 대사 출력
-    typeText(messages[obj.name]);
+function checkProximity() {
+    mapData[currentMap].objects.forEach(obj => {
+        const dx = player.x - (obj.x + obj.w / 2);
+        const dy = player.y - (obj.y + obj.h / 2);
+        const range = 80; // 가구 근처 판정 범위
+
+        let isCorrectSide = false;
+        // 캐릭터가 가구의 특정 방향 옆에 있고, 그 가구를 바라보고 있는지 체크
+        if (player.direction === "right" && dx < 0 && Math.abs(dx) < range + obj.w/2 && Math.abs(dy) < obj.h/2 + 20) isCorrectSide = true;
+        if (player.direction === "left" && dx > 0 && Math.abs(dx) < range + obj.w/2 && Math.abs(dy) < obj.h/2 + 20) isCorrectSide = true;
+        if (player.direction === "front" && dy < 0 && Math.abs(dy) < range + obj.h/2 && Math.abs(dx) < obj.w/2 + 20) isCorrectSide = true;
+        if (player.direction === "back" && dy > 0 && Math.abs(dy) < range + obj.h/2 && Math.abs(dx) < obj.w/2 + 20) isCorrectSide = true;
+
+        if (isCorrectSide) typeText(messages[obj.name]);
+    });
 }
 
 function draw() {
@@ -160,11 +179,8 @@ function draw() {
     mapData[currentMap].objects.forEach(obj => { if (obj.imgObj && obj.imgObj.complete) ctx.drawImage(obj.imgObj, obj.x, obj.y, obj.w, obj.h); });
     const img = playerImages[player.direction];
     if (img.complete) ctx.drawImage(img, player.x - player.size / 2, player.y - player.size / 2, player.size, player.size);
-    
-    // 네임택
     ctx.fillStyle = "rgba(0, 0, 0, 0.4)"; ctx.fillRect(player.x - 25, player.y - 45, 50, 20);
     ctx.fillStyle = "white"; ctx.font = "14px 'DungGeunMo'"; ctx.textAlign = "center"; ctx.fillText(player.name, player.x, player.y - 30);
-    
     requestAnimationFrame(draw);
 }
 draw();
