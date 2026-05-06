@@ -135,65 +135,48 @@ let player = {
    ========================= */
 
 const objects = [
-
   {
-
     name:'tv',
-
-    x:50, y:50, w:50, h:40,
-
+    x:30, y:30, w:80, h:70, // 크기를 50->80으로 키움
     img: (()=>{ let i=new Image(); i.src="https://i.imgur.com/x95Hwnw.png"; return i; })()
-
   },
-
   {
-
     name:'bed',
-
-    x:380, y:60, w:60, h:40,
-
+    x:360, y:40, w:100, h:80, // 크기를 60->100으로 키움
     img: (()=>{ let i=new Image(); i.src="https://i.imgur.com/gxjbbIY.png"; return i; })()
-
   },
-
   {
-
     name:'table',
-
-    x:200, y:200, w:60, h:40,
-
+    x:180, y:180, w:90, h:70, 
     img: (()=>{ let i=new Image(); i.src="https://i.imgur.com/EnAb1YP.png"; return i; })()
-
   },
-
   {
-
     name:'bath',
-
-    x:400, y:200, w:50, h:40,
-
+    x:380, y:200, w:80, h:70,
     img: (()=>{ let i=new Image(); i.src="https://i.imgur.com/viVc6C0.png"; return i; })()
-
+  },
+  {
+    name:'closet',
+    x:20, y:180, w:70, h:90, // 옷장 추가
+    img: (()=>{ let i=new Image(); i.src="https://i.imgur.com/GMdqkYn.png"; return i; })() 
+  },
+  {
+    name:'kitchen',
+    x:200, y:30, w:110, h:80, // 부엌 추가
+    img: (()=>{ let i=new Image(); i.src="https://i.imgur.com/86AUFui.png"; return i; })()
   }
-
 ];
 
 /* =========================
-
-   텍스트
-
+   텍스트 (새 가구 메시지 추가)
    ========================= */
-
 const messages = {
-
-  tv: "우리 여기서 같이 공포영화 보다가 무서워서 불 다 켜고 잤었지?",
-
-  bed: "이 침대에서 진짜 많이 웃고 얘기했던 거 생각나",
-
-  table: "같이 밥 먹으면서 별 얘기 다 했던 거 좋았어",
-
-  bath: "별거 아닌 순간인데도 같이 있어서 좋았던 기억이야"
-
+  tv: "어렸을때 티비를 자주봤어. 만화 위주로 봤었던 것같은데 요즘은 잘 안봐",
+  bed: "중요한 날이니까 일찍 일어나야해! 알람맞춰놓고 열차시간 맞춰서 일어났어",
+  table: "화장 다 하고 버스기다릴때 앉아있어야지 오빠한테 카톡보내놔야겠다 ",
+  bath: "여긴 내가 화장하는 곳이야 따로 화장대가 없어서 여기서 자주 치장해. 얼른 준비해야지!",
+  closet: "이건 옷장이야. 중요한 날에는 무슨옷을 입어야 잘보일지 고민을 많이해서 지각한적이 있어",
+  kitchen: "오빠한테 도시락을 만들어줘야해 하지만 한번에 성공한적이 없어"
 };
 
 /* ========================= */
