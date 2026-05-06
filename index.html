@@ -51,15 +51,25 @@ const mapData = {
             { name: 'table', x: 200, y: 350, w: 100, h: 80, img: "https://i.imgur.com/EnAb1YP.png" },
             { name: 'bath', x: 380, y: 340, w: 90, h: 90, img: "https://i.imgur.com/viVc6C0.png" }
         ],
-        door: { x: 460, y: 200, w: 40, h: 100, target: "station" }
+        door: { x: 450, y: 150, w: 50, h: 200, target: "station" },
+        bounds: { minX: 40, maxX: 460, minY: 150, maxY: 450 }
     },
     station: {
-        bg: "https://i.imgur.com/vHInE3r.png", // 제공해주신 기차역 이미지
+        bg: "https://i.imgur.com/vHInE3r.png",
         objects: [
-            { name: 'bench', x: 320, y: 440, w: 130, h: 180, img: "" }, // 투명 의자 영역
-            { name: 'train_body', x: 500, y: 230, w: 250, h: 500, img: "" } // 투명 열차 영역
+            { name: 'bench', x: 280, y: 440, w: 180, h: 160, img: "" }, // 벤치 클릭 영역
+            { name: 'train_body', x: 500, y: 100, w: 300, h: 400, img: "" } // 열차 몸체 클릭 영역
         ],
-        door: { x: 650, y: 450, w: 80, h: 120, target: "srt_inside" } 
+        // 열차의 투명한 문 부분 좌표 (클릭 시 이동)
+        door: { x: 600, y: 450, w: 100, h: 150, target: "srt_inside" },
+        // 캐릭터 이동 범위 제한 (열차 안이나 선로로 나가지 못하게 함)
+        bounds: { minX: 30, maxX: 850, minY: 330, maxY: 650 }
+    },
+    srt_inside: {
+        bg: "https://via.placeholder.com/500x500.png?text=SRT_Inside",
+        objects: [],
+        door: { x: 0, y: 0, w: 50, h: 500, target: "station" },
+        bounds: { minX: 50, maxX: 450, minY: 100, maxY: 450 }
     }
 };
 
@@ -94,10 +104,10 @@ function loadMap(mapName) {
     });
 
     if(mapName === "station") {
-        player.x = 100;
-        typeText("송정역에 도착했어! 오브젝트들을 클릭해봐"); // 맵 이동 시 첫 안내 문구
+        player.x = 100; player.y = 450;
+        typeText("송정역에 도착했어! 오브젝트들을 클릭해봐"); // 이전 문구로 복구
     } else if(mapName === "room") {
-        player.x = 420;
+        player.x = 420; player.y = 300;
     }
 }
 loadMap("room");
@@ -147,8 +157,12 @@ function handleInteraction(e) {
         else { nextY -= player.step; player.direction = "back"; }
     }
 
-    if (nextX < 40) nextX = 40; if (nextX > 460) nextX = 460;
-    if (nextY < 150) nextY = 150; if (nextY > 450) nextY = 450;
+    // 이동 범위 제한 로직
+    const bounds = mapData[currentMap].bounds;
+    if (nextX < bounds.minX) nextX = bounds.minX;
+    if (nextX > bounds.maxX) nextX = bounds.maxX;
+    if (nextY < bounds.minY) nextY = bounds.minY;
+    if (nextY > bounds.maxY) nextY = bounds.maxY;
 
     player.x = nextX; player.y = nextY;
 
