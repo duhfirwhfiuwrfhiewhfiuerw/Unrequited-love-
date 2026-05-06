@@ -17,7 +17,6 @@
         }
         .msg-entry { margin-bottom: 10px; border-bottom: 1px dashed #ffe0e5; padding-bottom: 6px; }
         .music-player { margin-top: 10px; width: 95%; max-width: 500px; text-align: center; }
-        .music-label { font-size: 12px; color: #e8cfcf; margin-bottom: 5px; }
         #yt-player { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
     </style>
 </head>
@@ -27,11 +26,7 @@
 <div id="textBox"></div>
 
 <div class="music-player">
-    <div class="music-label">Now Playing: 동물의 숲 브금 🍃</div>
-    <iframe id="yt-player"
-        src="https://www.youtube.com/embed/GYediWu_ixw?autoplay=1&loop=1&playlist=GYediWu_ixw&enablejsapi=1" 
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
-    </iframe>
+    <iframe id="yt-player" src="https://www.youtube.com/embed/GYediWu_ixw?autoplay=1&loop=1&playlist=GYediWu_ixw&enablejsapi=1" allow="autoplay"></iframe>
 </div>
 
 <script>
@@ -42,9 +37,9 @@ canvas.width = 500; canvas.height = 500;
 let currentMap = "room";
 
 const messages = {
-    welcome: "지수의 방에 온걸 환영해! 가구를 클릭하면 지수가 이동하며 말을 할 거야 💗",
-    bench: "벤치가 아주 큼직하네! 여기서 좀 쉬어갈까?",
-    train_body: "오른쪽 아래에 있는 이 열차를 타고 떠나는 거야!"
+    welcome: "지수의 방에 온걸 환영해! 가구를 클릭해봐 💗",
+    bench: "벤치를 아주 크게 만들었어! 이제 잘 보이지?",
+    train_body: "열차를 오른쪽 아래로 옮겼어. 클릭해서 안으로 들어가봐!"
 };
 
 const mapData = {
@@ -64,12 +59,12 @@ const mapData = {
     station: {
         bg: "https://i.imgur.com/GvvmB4e.jpeg",
         objects: [
-            // 1. 벤치: 화면 정중앙 배치 + 캐릭터보다 훨씬 크게 사이즈업
-            { name: 'bench', x: 170, y: 180, w: 160, h: 70, img: "https://i.imgur.com/LM0zkps.png" }, 
-            // 2. 열차: 화면 오른쪽 조금 아래로 이동 + 사이즈 확대
-            { name: 'train_body', x: 200, y: 280, w: 280, h: 180, img: "https://i.imgur.com/P0iVk3l.png" } 
+            // 벤치: 중앙 배치, 크기 가로 200으로 대폭 확대
+            { name: 'bench', x: 150, y: 150, w: 200, h: 100, img: "https://i.imgur.com/LM0zkps.png" }, 
+            // 열차: 오른쪽 아래 배치, 크기 300으로 확대
+            { name: 'train_body', x: 200, y: 280, w: 300, h: 200, img: "https://i.imgur.com/P0iVk3l.png" } 
         ],
-        door: { x: 280, y: 300, w: 120, h: 100, target: "srt_inside" },
+        door: { x: 250, y: 320, w: 200, h: 150, target: "srt_inside" },
         bounds: { minX: 20, maxX: 480, minY: 50, maxY: 480 }
     },
     srt_inside: {
@@ -103,7 +98,7 @@ function addText(text) {
     const box = document.getElementById('textBox');
     const newMsg = document.createElement('div');
     newMsg.className = 'msg-entry';
-    newMsg.innerText = text;
+    newMsg.innerHTML = text;
     box.appendChild(newMsg);
     box.scrollTop = box.scrollHeight;
 }
@@ -112,8 +107,10 @@ function loadMap(mapName) {
     currentMap = mapName;
     backgroundImg.src = mapData[mapName].bg;
     if(mapName === "station") {
-        player.x = 100; player.y = 200; // 벤치 옆에서 시작
-        addText("송정역에 도착했어! 배치를 다시 조정했어.");
+        player.x = 80; player.y = 400; // 왼쪽 아래 승강장에서 시작
+        addText("송정역이야! 중앙의 큰 벤치와 오른쪽 아래 열차를 봐!");
+    } else if(mapName === "room") {
+        player.x = 400; player.y = 300;
     }
 }
 
@@ -166,7 +163,8 @@ function draw() {
         if (obj.imgObj && obj.imgObj.complete) ctx.drawImage(obj.imgObj, obj.x, obj.y, obj.w, obj.h);
     });
     const pImg = playerImages[player.direction];
-    if (pImg.complete) ctx.drawImage(pImg, player.x - 27, player.y - 27, 55, 55);
+    if (pImg.complete) ctx.drawImage(pImg, player.x - player.size / 2, player.y - player.size / 2, player.size, player.size);
+    
     ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
     ctx.fillRect(player.x - 25, player.y - 45, 50, 18);
     ctx.fillStyle = "white";
