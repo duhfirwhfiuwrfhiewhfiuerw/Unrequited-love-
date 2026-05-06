@@ -13,7 +13,7 @@
 </head>
 <body>
 <canvas id="game"></canvas>
-<div id="textBox">지수의 방에온걸 환영해! 캐릭터를 가구쪽으로 움직여봐 💗</div>
+<div id="textBox">지수의 방에 온걸 환영해! 캐릭터를 가구쪽으로 움직여봐 💗</div>
 
 <script>
 const canvas = document.getElementById('game');
@@ -36,7 +36,7 @@ playerImages.right.src = "https://i.imgur.com/Kn58OH2.png";
 let player = {
     x: 250, y: 300,
     size: 55,
-    step: 25, // 보폭을 줄여서 더 세밀하게 이동 가능
+    step: 80, // 보폭을 두 칸(80px)으로 증가
     direction: "front",
     name: "지수"
 };
@@ -96,14 +96,13 @@ canvas.addEventListener('click', (e) => {
         else { nextY -= player.step; player.direction = "back"; }
     }
 
-    // 바닥 경계 체크
+    // 경계 제한
     if (nextX < 30 || nextX > canvas.width - 30 || nextY < 110 || nextY > 470) return; 
 
-    // 가구 충돌 체크 (뚫기 방지)
+    // 가구 충돌 체크
     let canMove = true;
     objects.forEach(obj => {
-        // 캐릭터의 발밑 범위를 기준으로 충돌 판정
-        if (nextX > obj.x - 15 && nextX < obj.x + obj.w + 15 &&
+        if (nextX > obj.x - 10 && nextX < obj.x + obj.w + 10 &&
             nextY > obj.y - 10 && nextY < obj.y + obj.h + 10) {
             canMove = false;
         }
@@ -114,18 +113,26 @@ canvas.addEventListener('click', (e) => {
         player.y = nextY;
     }
     
-    // 이동 성공 여부와 상관없이 근처에 있는지 확인 (막혀있어도 대사는 떠야 하므로)
     checkProximity();
 });
 
 function checkProximity() {
     objects.forEach(obj => {
-        // 캐릭터의 중심과 가구 중심의 거리 차이 계산
+        // 캐릭터와 가구 중심간의 거리
         const dx = Math.abs(player.x - (obj.x + obj.w / 2));
         const dy = Math.abs(player.y - (obj.y + obj.h / 2));
 
-        // 가구의 실제 크기에 아주 살짝의 여유(35~45px)만 두어 "바짝 붙었을 때"만 인식
-        if (dx < (obj.w / 2) + 35 && dy < (obj.h / 2) + 35) {
+        // 가구의 절반 크기
+        const halfW = obj.w / 2;
+        const halfH = obj.h / 2;
+
+        // 대각선 감지 방지 로직:
+        // 1. 좌우(옆)에 있을 때: 높이(dy)는 가구 범위 안이고 가로(dx)만 살짝 밖일 때
+        const isSide = (dy < halfH) && (dx > halfW && dx < halfW + 45);
+        // 2. 상하(앞뒤)에 있을 때: 가로(dx)는 가구 범위 안이고 높이(dy)만 살짝 밖일 때
+        const isFrontBack = (dx < halfW) && (dy > halfH && dy < halfH + 45);
+
+        if (isSide || isFrontBack) {
             typeText(messages[obj.name]);
         }
     });
