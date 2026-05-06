@@ -9,21 +9,22 @@
         body { margin: 0; background: #fff3f6; font-family: 'DungGeunMo', monospace; display: flex; flex-direction: column; align-items: center; padding: 10px 0; touch-action: manipulation; overflow-x: hidden; }
         canvas { width: 95%; max-width: 500px; background: #fdf6f0; border: 3px solid #e8cfcf; image-rendering: pixelated; border-radius: 10px; cursor: pointer; display: block; }
         
+        /* 누적 및 스크롤 설정 */
         #textBox {
             width: 95%; max-width: 500px; height: 130px; margin-top: 15px; padding: 15px;
             background: linear-gradient(135deg, #ffffff 0%, #fff5f7 100%);
             border: 4px solid #e8cfcf; box-shadow: inset 0 0 0 2px #ffffff, 5px 5px 0px rgba(232, 207, 207, 0.5);
             border-radius: 15px; box-sizing: border-box; line-height: 1.6; color: #5a4f4f; font-size: 15px; 
-            overflow-y: auto; word-break: keep-all; scroll-behavior: smooth;
+            overflow-y: auto; word-break: keep-all; position: relative;
+            scrollbar-width: thin; scrollbar-color: #ffb6c1 transparent;
+            scroll-behavior: smooth; /* 부드러운 스크롤 */
         }
-
-        /* 스크롤바 커스텀 */
+        
         #textBox::-webkit-scrollbar { width: 6px; }
         #textBox::-webkit-scrollbar-thumb { background-color: #ffb6c1; border-radius: 10px; }
 
-        .msg-entry { margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px dashed #ffe0e5; animation: fadeIn 0.3s ease; }
+        .msg-entry { margin-bottom: 10px; border-bottom: 1px dashed #ffe0e5; padding-bottom: 6px; }
         .msg-entry:last-child { border-bottom: none; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
         .music-player { margin-top: 10px; width: 95%; max-width: 500px; text-align: center; }
         .music-label { font-size: 12px; color: #e8cfcf; margin-bottom: 5px; }
@@ -33,6 +34,7 @@
 <body>
 
 <canvas id="game"></canvas>
+<!-- 초기 내용은 스크립트에서 addText로 삽입합니다 -->
 <div id="textBox"></div>
 
 <div class="music-player">
@@ -79,10 +81,10 @@ const mapData = {
     station: {
         bg: "https://i.imgur.com/GvvmB4e.jpeg",
         objects: [
-            { name: 'bench', x: 140, y: 340, w: 220, h: 130, img: "https://i.imgur.com/LM0zkps.png" }, 
-            { name: 'train_body', x: 100, y: 180, w: 350, h: 200, img: "https://i.imgur.com/P0iVk3l.png" } 
+            { name: 'bench', x: 140, y: 340, w: 180, h: 110, img: "https://i.imgur.com/LM0zkps.png" }, 
+            { name: 'train_body', x: 120, y: 200, w: 320, h: 220, img: "https://i.imgur.com/P0iVk3l.png" } 
         ],
-        door: { x: 280, y: 190, w: 120, h: 100, target: "srt_inside" },
+        door: { x: 300, y: 220, w: 120, h: 100, target: "srt_inside" },
         bounds: { minX: 30, maxX: 470, minY: 320, maxY: 460 }
     },
     srt_inside: {
@@ -100,7 +102,7 @@ playerImages.left.src = "https://i.imgur.com/ginoxYa.png";
 playerImages.right.src = "https://i.imgur.com/cQLW6ag.png";
 
 const backgroundImg = new Image();
-let player = { x: 400, y: 300, size: 55, step: 40, direction: "left", name: "지수" };
+let player = { x: 250, y: 300, size: 55, step: 40, direction: "front", name: "지수" };
 
 Object.values(mapData).forEach(map => {
     map.objects.forEach(obj => {
@@ -111,7 +113,7 @@ Object.values(mapData).forEach(map => {
     });
 });
 
-// 누적 텍스트 시스템
+// 수정된 누적 텍스트 추가 함수
 function addText(text) {
     if(!text) return;
     const box = document.getElementById('textBox');
@@ -121,10 +123,14 @@ function addText(text) {
 
     let i = 0;
     const interval = setInterval(() => {
-        newMsg.innerHTML += text[i++];
-        box.scrollTop = box.scrollHeight; // 새로운 글자가 나올 때마다 자동 스크롤
-        if (i >= text.length) clearInterval(interval);
-    }, 30);
+        if (i < text.length) {
+            newMsg.innerHTML += text[i++];
+            // 글자가 추가될 때마다 스크롤을 최하단으로 유지
+            box.scrollTop = box.scrollHeight;
+        } else {
+            clearInterval(interval);
+        }
+    }, 25);
 }
 
 function loadMap(mapName) {
@@ -138,17 +144,15 @@ function loadMap(mapName) {
         player.x = 400; player.y = 300;
     } else if(mapName === "srt_inside") {
         player.x = 250; player.y = 420;
-        addText("열차 안이야! 쾌적하고 좋다 ✨");
+        addText("열차 안이야! 투명창을 잘 눌러서 들어왔구나?");
     }
 }
 
-// 사물 충돌 판정 (뚫기 방지)
 function checkCollision(nx, ny) {
     const objects = mapData[currentMap].objects;
-    const margin = 25; // 캐릭터 크기에 따른 여유 공간
     for (let obj of objects) {
-        if (nx + margin > obj.x && nx - margin < obj.x + obj.w &&
-            ny + margin > obj.y && ny - margin < obj.y + obj.h) {
+        if (nx > obj.x - 20 && nx < obj.x + obj.w + 20 &&
+            ny > obj.y - 10 && ny < obj.y + obj.h + 10) {
             return true;
         }
     }
@@ -165,14 +169,12 @@ function handleInteraction(e) {
     const clickX = (clientX - rect.left) * scaleX;
     const clickY = (clientY - rect.top) * scaleY;
 
-    // 1. 입구 체크
     const door = mapData[currentMap].door;
     if (clickX > door.x && clickX < door.x + door.w && clickY > door.y && clickY < door.y + door.h) {
         loadMap(door.target);
         return;
     }
 
-    // 2. 사물 클릭 여부 확인 (이동 전 목표 확인)
     let targetObj = null;
     mapData[currentMap].objects.forEach(obj => {
         if (clickX > obj.x && clickX < obj.x + obj.w && clickY > obj.y && clickY < obj.y + obj.h) {
@@ -180,7 +182,6 @@ function handleInteraction(e) {
         }
     });
 
-    // 3. 이동 로직
     const diffX = clickX - player.x;
     const diffY = clickY - player.y;
     let nextX = player.x;
@@ -202,7 +203,6 @@ function handleInteraction(e) {
         player.y = nextY;
     }
 
-    // 4. 클릭한 사물이 있으면 텍스트 추가
     if (targetObj) {
         addText(messages[targetObj.name]);
     }
@@ -236,10 +236,10 @@ function draw() {
     requestAnimationFrame(draw);
 }
 
-// 초기화
-window.onload = () => {
+// 게임 시작 시 초기화 및 첫 멘트 출력
+window.onload = function() {
     backgroundImg.src = mapData["room"].bg;
-    addText(messages.welcome); // 처음에 환영 멘트 띄우기
+    addText(messages.welcome); // 지수의 방에 온걸 환영해! 출력
     draw();
 };
 </script>
