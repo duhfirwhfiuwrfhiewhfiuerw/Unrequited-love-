@@ -9,21 +9,21 @@
         body { margin: 0; background: #fff3f6; font-family: 'DungGeunMo', monospace; display: flex; flex-direction: column; align-items: center; padding: 10px 0; touch-action: manipulation; overflow-x: hidden; }
         canvas { width: 95%; max-width: 500px; background: #fdf6f0; border: 3px solid #e8cfcf; image-rendering: pixelated; border-radius: 10px; cursor: pointer; display: block; }
         
-        /* 텍스트 박스 수정: 누적 스크롤이 가능하도록 설정 */
         #textBox {
             width: 95%; max-width: 500px; height: 130px; margin-top: 15px; padding: 15px;
             background: linear-gradient(135deg, #ffffff 0%, #fff5f7 100%);
             border: 4px solid #e8cfcf; box-shadow: inset 0 0 0 2px #ffffff, 5px 5px 0px rgba(232, 207, 207, 0.5);
             border-radius: 15px; box-sizing: border-box; line-height: 1.6; color: #5a4f4f; font-size: 15px; 
-            overflow-y: auto; word-break: keep-all; position: relative;
-            scrollbar-width: thin; scrollbar-color: #ffb6c1 transparent;
+            overflow-y: auto; word-break: keep-all; scroll-behavior: smooth;
         }
-        /* 스크롤바 디자인 */
+
+        /* 스크롤바 커스텀 */
         #textBox::-webkit-scrollbar { width: 6px; }
         #textBox::-webkit-scrollbar-thumb { background-color: #ffb6c1; border-radius: 10px; }
 
-        .msg-entry { margin-bottom: 8px; border-bottom: 1px dashed #ffe0e5; padding-bottom: 4px; }
+        .msg-entry { margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px dashed #ffe0e5; animation: fadeIn 0.3s ease; }
         .msg-entry:last-child { border-bottom: none; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
         .music-player { margin-top: 10px; width: 95%; max-width: 500px; text-align: center; }
         .music-label { font-size: 12px; color: #e8cfcf; margin-bottom: 5px; }
@@ -33,9 +33,7 @@
 <body>
 
 <canvas id="game"></canvas>
-<div id="textBox">
-    <div class="msg-entry">지수의 방에 온걸 환영해! 가구를 클릭하면 지수가 이동하며 말을 할 거야 💗</div>
-</div>
+<div id="textBox"></div>
 
 <div class="music-player">
     <div class="music-label">Now Playing: 동물의 숲 브금 🍃</div>
@@ -53,6 +51,7 @@ canvas.width = 500; canvas.height = 500;
 let currentMap = "room";
 
 const messages = {
+    welcome: "지수의 방에 온걸 환영해! 가구를 클릭하면 지수가 이동하며 말을 할 거야 💗",
     tv: "어렸을때 티비를 자주봤어. 만화 위주로 봤었던 것같은데 요즘은 잘 안봐",
     bed: "중요한 날이니까 일찍 일어나야해! 알람맞춰놓고 열차시간 맞춰서 일어났어",
     table: "화장 다 하고 버스기다릴때 앉아있어야지 오빠한테 카톡보내놔야겠다",
@@ -80,10 +79,10 @@ const mapData = {
     station: {
         bg: "https://i.imgur.com/GvvmB4e.jpeg",
         objects: [
-            { name: 'bench', x: 140, y: 350, w: 180, h: 110, img: "https://i.imgur.com/LM0zkps.png" }, 
-            { name: 'train_body', x: 120, y: 200, w: 320, h: 220, img: "https://i.imgur.com/P0iVk3l.png" } 
+            { name: 'bench', x: 140, y: 340, w: 220, h: 130, img: "https://i.imgur.com/LM0zkps.png" }, 
+            { name: 'train_body', x: 100, y: 180, w: 350, h: 200, img: "https://i.imgur.com/P0iVk3l.png" } 
         ],
-        door: { x: 300, y: 220, w: 120, h: 100, target: "srt_inside" },
+        door: { x: 280, y: 190, w: 120, h: 100, target: "srt_inside" },
         bounds: { minX: 30, maxX: 470, minY: 320, maxY: 460 }
     },
     srt_inside: {
@@ -101,7 +100,7 @@ playerImages.left.src = "https://i.imgur.com/ginoxYa.png";
 playerImages.right.src = "https://i.imgur.com/cQLW6ag.png";
 
 const backgroundImg = new Image();
-let player = { x: 250, y: 300, size: 55, step: 40, direction: "front", name: "지수" };
+let player = { x: 400, y: 300, size: 55, step: 40, direction: "left", name: "지수" };
 
 Object.values(mapData).forEach(map => {
     map.objects.forEach(obj => {
@@ -112,7 +111,7 @@ Object.values(mapData).forEach(map => {
     });
 });
 
-// 새로운 텍스트 추가 함수 (기존 내용 유지 + 스크롤)
+// 누적 텍스트 시스템
 function addText(text) {
     if(!text) return;
     const box = document.getElementById('textBox');
@@ -123,7 +122,7 @@ function addText(text) {
     let i = 0;
     const interval = setInterval(() => {
         newMsg.innerHTML += text[i++];
-        box.scrollTop = box.scrollHeight; // 새로운 글자가 써질 때마다 아래로 스크롤
+        box.scrollTop = box.scrollHeight; // 새로운 글자가 나올 때마다 자동 스크롤
         if (i >= text.length) clearInterval(interval);
     }, 30);
 }
@@ -139,15 +138,17 @@ function loadMap(mapName) {
         player.x = 400; player.y = 300;
     } else if(mapName === "srt_inside") {
         player.x = 250; player.y = 420;
-        addText("열차 안이야! 투명창을 잘 눌러서 들어왔구나?");
+        addText("열차 안이야! 쾌적하고 좋다 ✨");
     }
 }
 
+// 사물 충돌 판정 (뚫기 방지)
 function checkCollision(nx, ny) {
     const objects = mapData[currentMap].objects;
+    const margin = 25; // 캐릭터 크기에 따른 여유 공간
     for (let obj of objects) {
-        if (nx > obj.x - 20 && nx < obj.x + obj.w + 20 &&
-            ny > obj.y - 10 && ny < obj.y + obj.h + 10) {
+        if (nx + margin > obj.x && nx - margin < obj.x + obj.w &&
+            ny + margin > obj.y && ny - margin < obj.y + obj.h) {
             return true;
         }
     }
@@ -164,12 +165,14 @@ function handleInteraction(e) {
     const clickX = (clientX - rect.left) * scaleX;
     const clickY = (clientY - rect.top) * scaleY;
 
+    // 1. 입구 체크
     const door = mapData[currentMap].door;
     if (clickX > door.x && clickX < door.x + door.w && clickY > door.y && clickY < door.y + door.h) {
         loadMap(door.target);
         return;
     }
 
+    // 2. 사물 클릭 여부 확인 (이동 전 목표 확인)
     let targetObj = null;
     mapData[currentMap].objects.forEach(obj => {
         if (clickX > obj.x && clickX < obj.x + obj.w && clickY > obj.y && clickY < obj.y + obj.h) {
@@ -177,6 +180,7 @@ function handleInteraction(e) {
         }
     });
 
+    // 3. 이동 로직
     const diffX = clickX - player.x;
     const diffY = clickY - player.y;
     let nextX = player.x;
@@ -198,6 +202,7 @@ function handleInteraction(e) {
         player.y = nextY;
     }
 
+    // 4. 클릭한 사물이 있으면 텍스트 추가
     if (targetObj) {
         addText(messages[targetObj.name]);
     }
@@ -231,8 +236,12 @@ function draw() {
     requestAnimationFrame(draw);
 }
 
-backgroundImg.src = mapData["room"].bg;
-draw();
+// 초기화
+window.onload = () => {
+    backgroundImg.src = mapData["room"].bg;
+    addText(messages.welcome); // 처음에 환영 멘트 띄우기
+    draw();
+};
 </script>
 </body>
 </html>
