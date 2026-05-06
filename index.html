@@ -7,7 +7,7 @@
     <link href="https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2107@1.1/DungGeunMo.css" rel="stylesheet">
     <style>
         body { margin: 0; background: #fff3f6; font-family: 'DungGeunMo', monospace; display: flex; flex-direction: column; align-items: center; }
-        canvas { width: 100%; max-width: 500px; background: #fdf6f0; border: 3px solid #e8cfcf; }
+        canvas { width: 100%; max-width: 500px; background: #fdf6f0; border: 3px solid #e8cfcf; image-rendering: pixelated; }
         #textBox { width: 100%; max-width: 500px; min-height: 120px; background: white; padding: 15px; border-top: 3px solid #e8cfcf; box-sizing: border-box; line-height: 1.6; }
     </style>
 </head>
@@ -21,14 +21,7 @@ const ctx = canvas.getContext('2d');
 canvas.width = 500;
 canvas.height = 300;
 
-// 이미지 로딩 확인용 카운터
-let imagesLoaded = 0;
-const totalImages = 5; // 배경1 + 캐릭터1(현재는 front만 사용 중이므로) + 가구... (필요에 따라 조정)
-
-function imageLoaded() {
-    imagesLoaded++;
-}
-
+// 배경 및 캐릭터 이미지 설정
 const backgroundImg = new Image();
 backgroundImg.src = "https://i.imgur.com/bMfMr3n.png";
 
@@ -43,7 +36,7 @@ playerImages.right.src = "https://i.imgur.com/Kn58OH2.png";
 let player = {
     x: 240, y: 160,
     size: 50,
-    step: 40, // 한 번에 이동할 거리 (칸 단위)
+    step: 40,
     direction: "front"
 };
 
@@ -57,13 +50,10 @@ const objects = [
 ];
 
 objects.forEach(obj => {
-    const img = new Image();
-    img.src = obj.img;
-    obj.imgObj = img;
+    obj.imgObj = new Image();
+    obj.imgObj.src = obj.img;
 });
-/* =========================
-   텍스트 (새 가구 메시지 추가)
-   ========================= */
+
 const messages = {
     tv: "어렸을때 티비를 자주봤어. 만화 위주로 봤었던 것같은데 요즘은 잘 안봐",
     bed: "중요한 날이니까 일찍 일어나야해! 알람맞춰놓고 열차시간 맞춰서 일어났어",
@@ -73,9 +63,11 @@ const messages = {
     kitchen: "오빠한테 도시락을 만들어줘야해 하지만 한번에 성공한적이 없어"
 };
 
-/* ========================= */
+let lastMessage = "";
 
 function typeText(text) {
+    if (lastMessage === text) return;
+    lastMessage = text;
     let i = 0;
     const box = document.getElementById('textBox');
     box.innerHTML = "";
@@ -86,24 +78,27 @@ function typeText(text) {
         if (i >= text.length) clearInterval(window.textInterval);
     }, 30);
 }
-/* ========================= */
 
+// 클릭 이벤트 하나로 통합 (가구 터치 + 이동)
 canvas.addEventListener('click', (e) => {
     const rect = canvas.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
     const clickY = e.clientY - rect.top;
 
-    // 1. 가구 직접 터치 시 메시지 출력
+    // 1. 가구 직접 터치 확인
     let clickedObj = null;
     objects.forEach(obj => {
         if (clickX > obj.x && clickX < obj.x + obj.w && clickY > obj.y && clickY < obj.y + obj.h) {
             clickedObj = obj;
         }
     });
-/* ========================= */
 
-function update(){
- // 2. 바닥 터치 시 칸 단위 이동 (벽 뚫기 방지)
+    if (clickedObj) {
+        typeText(messages[clickedObj.name]);
+        return; // 가구를 누르면 이동은 안 함
+    }
+
+    // 2. 캐릭터 이동 (벽 뚫기 방지 포함)
     let nextX = player.x;
     let nextY = player.y;
 
@@ -115,33 +110,38 @@ function update(){
         else { nextY -= player.step; player.direction = "back"; }
     }
 
-    // 화면 밖으로 나가지 않게 (벽 뚫기 방지)
-    if (nextX > 20 && nextX < canvas.width - 20) player.x = nextX;
-    if (nextY > 20 && nextY < canvas.height - 20) player.y = nextY;
-  
-checkCollision();
+    // 캔버스 경계 제한
+    if (nextX >= 40 && nextX <= canvas.width - 40) player.x = nextX;
+    if (nextY >= 40 && nextY <= canvas.height - 40) player.y = nextY;
+
+    checkCollision();
 });
 
 function checkCollision() {
     objects.forEach(obj => {
-        const dist = Math.sqrt(Math.pow(player.x - (obj.x + obj.w/2), 2) + Math.pow(player.y - (obj.y + obj.h/2), 2));
+        const dx = player.x - (obj.x + obj.w / 2);
+        const dy = player.y - (obj.y + obj.h / 2);
+        const dist = Math.sqrt(dx * dx + dy * dy);
         if (dist < 70) {
             typeText(messages[obj.name]);
         }
     });
 }
-/* ========================= */
 
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // 배경
     ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height);
 
+    // 가구
     objects.forEach(obj => {
         if (obj.imgObj.complete) {
             ctx.drawImage(obj.imgObj, obj.x, obj.y, obj.w, obj.h);
         }
     });
 
+    // 캐릭터
     const img = playerImages[player.direction];
     if (img.complete) {
         ctx.drawImage(img, player.x - player.size / 2, player.y - player.size / 2, player.size, player.size);
@@ -150,9 +150,6 @@ function draw() {
 }
 
 draw();
-
 </script>
-
 </body>
-
 </html>
