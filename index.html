@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>지수 일기 - 새로운 시작</title>
+    <title>지수 일기</title>
     <link href="https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2107@1.1/DungGeunMo.css" rel="stylesheet">
     <style>
         body { margin: 0; background: #fff3f6; font-family: 'DungGeunMo', monospace; display: flex; flex-direction: column; align-items: center; padding: 20px 0; overflow-x: hidden; }
         canvas { width: 100%; max-width: 500px; background: #fdf6f0; border: 3px solid #e8cfcf; image-rendering: pixelated; border-radius: 10px; cursor: pointer; }
 
-        /* ✨ 텍스트박스 디자인 */
+        /* ✨ 텍스트박스 */
         #textBox {
             width: 95%; max-width: 500px; min-height: 120px; margin-top: 20px; padding: 22px;
             background: linear-gradient(135deg, #ffffff 0%, #fff5f7 100%);
@@ -29,7 +29,7 @@
 <canvas id="game"></canvas>
 <div id="textBox">지수의 방에 온걸 환영해! 오른쪽 문을 통해 밖으로 나갈 수 있어 🚪✨</div>
 
-<!-- 🎵 유튜브 화면은 숨기고 텍스트만 표시 -->
+<!-- 🎵 유튜브 화면은 숨기고 자동 재생 설정 -->
 <div class="music-info">
     <span>Now Playing: 동물의 숲 브금 🍃</span>
     <iframe id="yt-player"
@@ -44,7 +44,7 @@ const ctx = canvas.getContext('2d');
 canvas.width = 500;
 canvas.height = 500;
 
-// 🗺️ 맵 데이터 통합 관리
+// 🗺️ 맵 데이터 (방과 정원 분리)
 let currentMap = "room"; 
 
 const mapData = {
@@ -61,15 +61,16 @@ const mapData = {
         welcomeMsg: "지수의 방이야. 가구들을 살펴보거나 오른쪽 문으로 나가봐!"
     },
     garden: {
-        bg: "https://i.imgur.com/vHInE3r.png", // 새 배경 (정원)
+        bg: "https://i.imgur.com/vHInE3r.png", // 정원 배경
         objects: [
             { name: 'tree', label: '나무', x: 100, y: 150, w: 100, h: 120, img: "https://i.imgur.com/hV8fGIm.png" },
             { name: 'mailbox', label: '우체통', x: 400, y: 350, w: 40, h: 60, img: "https://i.imgur.com/5yPq2uO.png" }
         ],
-        welcomeMsg: "와! 밖으로 나왔어. 정원이 정말 예쁘지?"
+        welcomeMsg: "와! 밖으로 나왔어. 공기가 정말 좋다! 🌷"
     }
 };
 
+// 이미지 로딩
 const bgImg = new Image();
 const playerImages = { front: new Image(), back: new Image(), left: new Image(), right: new Image() };
 playerImages.front.src = "https://i.imgur.com/l1ENJqo.png";
@@ -77,8 +78,9 @@ playerImages.back.src = "https://i.imgur.com/nbzUAfX.png";
 playerImages.left.src = "https://i.imgur.com/ginoxYa.png";
 playerImages.right.src = "https://i.imgur.com/Kn58OH2.png";
 
-let player = { x: 250, y: 300, size: 55, step: 80, direction: "front", name: "지수" };
+let player = { x: 250, y: 300, size: 55, step: 60, direction: "front", name: "지수" };
 
+// ✨ 원본 코드의 대사들 완벽 유지
 const messages = {
     tv: "어렸을때 티비를 자주봤어. 만화 위주로 봤었던 것같은데 요즘은 잘 안봐",
     bed: "중요한 날이니까 일찍 일어나야해! 알람맞춰놓고 열차시간 맞춰서 일어났어",
@@ -98,7 +100,7 @@ function loadMap(mapName) {
         obj.imgObj.src = obj.img;
     });
 
-    // 맵 이동 시 위치 보정
+    // 맵 이동 시 플레이어 위치 조정
     if(mapName === "garden") { player.x = 60; } 
     else { player.x = 440; }
     
@@ -138,7 +140,7 @@ canvas.addEventListener('click', (e) => {
         else { nextY -= player.step; player.direction = "back"; }
     }
 
-    // 🚪 맵 전환 트리거 (오른쪽/왼쪽 끝)
+    // 🚪 맵 전환 로직 (오른쪽 문 영역 체크)
     if (currentMap === "room" && nextX > 470) {
         loadMap("garden");
         return;
@@ -148,7 +150,7 @@ canvas.addEventListener('click', (e) => {
         return;
     }
 
-    // 경계 제한 및 오브젝트 충돌
+    // 경계 및 충돌 체크
     if (nextX < 20 || nextX > 480 || nextY < 100 || nextY > 480) return; 
 
     let canMove = true;
@@ -180,7 +182,7 @@ function draw() {
     ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
     
     mapData[currentMap].objects.forEach(obj => {
-        if (obj.imgObj.complete) ctx.drawImage(obj.imgObj, obj.x, obj.y, obj.w, obj.h);
+        if (obj.imgObj && obj.imgObj.complete) ctx.drawImage(obj.imgObj, obj.x, obj.y, obj.w, obj.h);
     });
 
     const img = playerImages[player.direction];
