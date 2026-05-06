@@ -40,6 +40,18 @@ const ctx = canvas.getContext('2d');
 canvas.width = 500; canvas.height = 500;
 
 let currentMap = "room";
+
+const messages = {
+    tv: "어렸을때 티비를 자주봤어. 만화 위주로 봤었던 것같은데 요즘은 잘 안봐",
+    bed: "중요한 날이니까 일찍 일어나야해! 알람맞춰놓고 열차시간 맞춰서 일어났어",
+    table: "화장 다 하고 버스기다릴때 앉아있어야지 오빠한테 카톡보내놔야겠다",
+    bath: "여긴 내가 화장하는 곳이야 따로 화장대가 없어서 여기서 자주 치장해. 얼른 준비해야지!",
+    closet: "이건 옷장이야. 중요한 날에는 무슨옷을 입어야 잘보일지 고민을 많이해서 지각한적이 있어",
+    kitchen: "오빠한테 도시락을 만들어줘야해 하지만 한번에 성공한적이 없어",
+    bench: " 조금 일찍 도착했으니까 여기서 열차를 기다릴수 있어 ",
+    train_body: " 내가 타야하는 열차야! 일찍 도착했으니까 빨리타서 안에서 기다리자. 열차에 투명부분을 눌러봐! "
+};
+
 const mapData = {
     room: {
         bg: "https://i.imgur.com/bMfMr3n.png",
@@ -57,22 +69,19 @@ const mapData = {
     station: {
         bg: "https://i.imgur.com/GvvmB4e.jpeg",
         objects: [
-            { 
-                name: 'bench', // messages와 연결되는 이름
-                x: 150, y: 380, // 캐릭터가 갈 수 있는 아래쪽 위치로 조정
-                w: 120, h: 80, 
-                img: "https://i.imgur.com/LM0zkps.png" 
-            }, 
-            { 
-                name: 'train_body', 
-                x: 200, y: 150, // 열차 이미지 위치 조정
-                w: 280, h: 180, 
-                img: "https://i.imgur.com/P0iVk3l.png" 
-            } 
+            { name: 'bench', x: 150, y: 370, w: 120, h: 80, img: "https://i.imgur.com/LM0zkps.png" }, 
+            { name: 'train_body', x: 220, y: 120, w: 260, h: 180, img: "https://i.imgur.com/P0iVk3l.png" } 
         ],
         door: { x: 320, y: 180, w: 100, h: 100, target: "srt_inside" },
-        bounds: { minX: 30, maxX: 470, minY: 320, maxY: 460 } // 캐릭터 이동 범위
+        bounds: { minX: 30, maxX: 470, minY: 320, maxY: 460 }
     },
+    srt_inside: {
+        bg: "https://i.imgur.com/3N4o89c.png", 
+        objects: [],
+        door: { x: 0, y: 400, w: 500, h: 100, target: "station" },
+        bounds: { minX: 50, maxX: 450, minY: 150, maxY: 450 }
+    }
+};
 
 const backgroundImg = new Image();
 const playerImages = { front: new Image(), back: new Image(), left: new Image(), right: new Image() };
@@ -83,45 +92,39 @@ playerImages.right.src = "https://i.imgur.com/cQLW6ag.png";
 
 let player = { x: 250, y: 300, size: 55, step: 40, direction: "front", name: "지수" };
 
-const messages = {
-    tv: "어렸을때 티비를 자주봤어. 만화 위주로 봤었던 것같은데 요즘은 잘 안봐",
-    bed: "중요한 날이니까 일찍 일어나야해! 알람맞춰놓고 열차시간 맞춰서 일어났어",
-    table: "화장 다 하고 버스기다릴때 앉아있어야지 오빠한테 카톡보내놔야겠다",
-    bath: "여긴 내가 화장하는 곳이야 따로 화장대가 없어서 여기서 자주 치장해. 얼른 준비해야지!",
-    closet: "이건 옷장이야. 중요한 날에는 무슨옷을 입어야 잘보일지 고민을 많이해서 지각한적이 있어",
-    kitchen: "오빠한테 도시락을 만들어줘야해 하지만 한번에 성공한적이 없어",
-    bench: " 조금 일찍 도착했으니까 여기서 열차를 기다릴수 있어 ",
-    train_body: " 내가 타야하는 열차야! 일찍 도착했으니까 빨리타서 안에서 기다리자. 열차에 투명부분을 눌러봐! "
-};
+// 모든 이미지 미리 로드
+Object.values(mapData).forEach(map => {
+    map.objects.forEach(obj => {
+        if(obj.img) {
+            obj.imgObj = new Image();
+            obj.imgObj.src = obj.img;
+        }
+    });
+});
 
 function loadMap(mapName) {
     currentMap = mapName;
     backgroundImg.src = mapData[mapName].bg;
     
-    // 텍스트 초기화 (페이지 이동 시)
     const box = document.getElementById('textBox');
     box.innerHTML = "";
 
-    mapData[mapName].objects.forEach(obj => {
-        if(obj.img && !obj.imgObj) {
-            obj.imgObj = new Image();
-            obj.imgObj.src = obj.img;
-        }
-    });
-
     if(mapName === "station") {
-        player.x = 100; player.y = 400;
-        typeText("송정역에 도착했어! 오브젝트들을 클릭해봐");
+        player.x = 80; player.y = 400;
+        typeText("송정역에 도착했어! 물건들을 클릭해봐 ✨");
     } else if(mapName === "room") {
         player.x = 400; player.y = 300;
+    } else if(mapName === "srt_inside") {
+        player.x = 250; player.y = 400;
+        typeText("열차 안이야! 정말 쾌적하다.");
     }
 }
-loadMap("room");
 
 function typeText(text) {
+    if(!text) return;
     let i = 0; 
     const box = document.getElementById('textBox'); 
-    box.innerHTML = ""; // 가구 클릭 시 기존 멘트 삭제
+    box.innerHTML = ""; 
     clearInterval(window.textInterval);
     window.textInterval = setInterval(() => {
         box.innerHTML += text[i++];
@@ -129,22 +132,24 @@ function typeText(text) {
     }, 30);
 }
 
-canvas.addEventListener('mousedown', (e) => handleInteraction(e));
-canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleInteraction(e.touches[0]); }, {passive: false});
-
 function handleInteraction(e) {
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
-    const clickX = (e.clientX - rect.left) * scaleX;
-    const clickY = (e.clientY - rect.top) * scaleY;
+    const clientX = e.clientX || e.touches[0].clientX;
+    const clientY = e.clientY || e.touches[0].clientY;
+    
+    const clickX = (clientX - rect.left) * scaleX;
+    const clickY = (clientY - rect.top) * scaleY;
 
+    // 문 체크
     const door = mapData[currentMap].door;
     if (clickX > door.x && clickX < door.x + door.w && clickY > door.y && clickY < door.y + door.h) {
         loadMap(door.target);
         return;
     }
 
+    // 오브젝트 체크
     let targetObj = null;
     mapData[currentMap].objects.forEach(obj => {
         if (clickX > obj.x && clickX < obj.x + obj.w && clickY > obj.y && clickY < obj.y + obj.h) {
@@ -152,10 +157,11 @@ function handleInteraction(e) {
         }
     });
 
-    let nextX = player.x;
-    let nextY = player.y;
+    // 이동
     const diffX = clickX - player.x;
     const diffY = clickY - player.y;
+    let nextX = player.x;
+    let nextY = player.y;
 
     if (Math.abs(diffX) > Math.abs(diffY)) {
         if (diffX > 0) { nextX += player.step; player.direction = "right"; }
@@ -166,32 +172,25 @@ function handleInteraction(e) {
     }
 
     const bounds = mapData[currentMap].bounds;
-    if (nextX < bounds.minX) nextX = bounds.minX;
-    if (nextX > bounds.maxX) nextX = bounds.maxX;
-    if (nextY < bounds.minY) nextY = bounds.minY;
-    if (nextY > bounds.maxY) nextY = bounds.maxY;
-
-    let canMove = true;
-    mapData[currentMap].objects.forEach(obj => {
-        if (obj.img !== "" && nextX > obj.x - 20 && nextX < obj.x + obj.w + 20 && nextY > obj.y - 20 && nextY < obj.y + obj.h + 20) {
-            canMove = false;
-        }
-    });
-
-    if (canMove) {
+    if (nextX >= bounds.minX && nextX <= bounds.maxX && nextY >= bounds.minY && nextY <= bounds.maxY) {
         player.x = nextX;
         player.y = nextY;
     }
 
-    // 오브젝트를 클릭했을 때만 멘트 출력 (기존 멘트는 지워짐)
     if (targetObj) {
         typeText(messages[targetObj.name]);
     }
 }
 
+canvas.addEventListener('mousedown', handleInteraction);
+canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleInteraction(e); }, {passive: false});
+
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    if (backgroundImg.complete) ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height);
+    
+    if (backgroundImg.complete) {
+        ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height);
+    }
     
     mapData[currentMap].objects.forEach(obj => {
         if (obj.imgObj && obj.imgObj.complete) {
@@ -199,19 +198,23 @@ function draw() {
         }
     });
 
-    const img = playerImages[player.direction];
-    if (img.complete) {
-        ctx.drawImage(img, player.x - player.size / 2, player.y - player.size / 2, player.size, player.size);
+    const pImg = playerImages[player.direction];
+    if (pImg.complete) {
+        ctx.drawImage(pImg, player.x - player.size / 2, player.y - player.size / 2, player.size, player.size);
     }
     
-    ctx.fillStyle = "rgba(0, 0, 0, 0.4)"; ctx.fillRect(player.x - 25, player.y - 45, 50, 20);
-    ctx.fillStyle = "white"; ctx.font = "14px 'DungGeunMo'"; ctx.textAlign = "center"; ctx.fillText(player.name, player.x, player.y - 30);
+    ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+    ctx.fillRect(player.x - 25, player.y - 45, 50, 18);
+    ctx.fillStyle = "white";
+    ctx.font = "14px 'DungGeunMo'";
+    ctx.textAlign = "center";
+    ctx.fillText(player.name, player.x, player.y - 31);
+
     requestAnimationFrame(draw);
 }
 
-Object.values(mapData).forEach(map => {
-    map.objects.forEach(obj => { if(obj.img) { obj.imgObj = new Image(); obj.imgObj.src = obj.img; } });
-});
+// 시작
+loadMap("room");
 draw();
 </script>
 </body>
