@@ -1,3 +1,5 @@
+<!DOCTYPE html>
+
 <html lang="ko">
 
 <head>
@@ -7,8 +9,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>우리 집 이야기</title>
-
-<!-- 픽셀 감성 폰트 -->
 
 <link href="https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2107@1.1/DungGeunMo.css" rel="stylesheet">
 
@@ -30,15 +30,11 @@ body{
 
 }
 
-/* 캔버스 */
-
 canvas{
 
   width:100%;
 
   max-width:500px;
-
-  height:auto;
 
   background:#fdf6f0;
 
@@ -47,8 +43,6 @@ canvas{
   border:3px solid #e8cfcf;
 
 }
-
-/* 텍스트 박스 */
 
 #textBox{
 
@@ -92,6 +86,42 @@ canvas.height = 300;
 
 /* =========================
 
+   💖 배경 이미지 넣는 곳
+
+   ========================= */
+
+const backgroundImg = new Image();
+
+backgroundImg.src = "https://i.imgur.com/bMfMr3n.png";
+
+/* =========================
+
+   💖 캐릭터 이미지 넣는 곳
+
+   ========================= */
+
+const playerImages = {
+
+  front: new Image(),
+
+  back: new Image(),
+
+  left: new Image(),
+
+  right: new Image()
+
+};
+
+playerImages.front.src = "앞모습 링크";
+
+playerImages.back.src = "뒷모습 링크";
+
+playerImages.left.src = "왼쪽 링크";
+
+playerImages.right.src = "오른쪽 링크";
+
+/* =========================
+
    캐릭터 설정
 
    ========================= */
@@ -102,37 +132,69 @@ let player = {
 
   y: 150,
 
-  size: 20,
+  size: 32,
 
   targetX: 250,
 
-  targetY: 150
+  targetY: 150,
+
+  direction: "front"
 
 };
 
 /* =========================
 
-   오브젝트 (가구)
-
-   x,y 값 바꾸면 위치 변경 가능
+   💖 가구 이미지 넣는 곳
 
    ========================= */
 
 const objects = [
 
-  {name:'tv', x:50, y:50, w:40, h:30},
+  {
 
-  {name:'bed', x:380, y:60, w:50, h:30},
+    name:'tv',
 
-  {name:'table', x:200, y:200, w:50, h:30},
+    x:50, y:50, w:50, h:40,
 
-  {name:'bath', x:400, y:200, w:40, h:30}
+    img: (()=>{ let i=new Image(); i.src="TV 이미지 링크"; return i; })()
+
+  },
+
+  {
+
+    name:'bed',
+
+    x:380, y:60, w:60, h:40,
+
+    img: (()=>{ let i=new Image(); i.src="침대 이미지 링크"; return i; })()
+
+  },
+
+  {
+
+    name:'table',
+
+    x:200, y:200, w:60, h:40,
+
+    img: (()=>{ let i=new Image(); i.src="테이블 이미지 링크"; return i; })()
+
+  },
+
+  {
+
+    name:'bath',
+
+    x:400, y:200, w:50, h:40,
+
+    img: (()=>{ let i=new Image(); i.src="욕실 이미지 링크"; return i; })()
+
+  }
 
 ];
 
 /* =========================
 
-   추억 문구 (여기 수정하면 됨)
+   텍스트
 
    ========================= */
 
@@ -148,11 +210,7 @@ const messages = {
 
 };
 
-/* =========================
-
-   텍스트 타이핑 효과
-
-   ========================= */
+/* ========================= */
 
 function typeText(text){
 
@@ -174,43 +232,45 @@ function typeText(text){
 
 }
 
-/* =========================
-
-   클릭 시 이동
-
-   ========================= */
+/* ========================= */
 
 canvas.addEventListener('click', (e)=>{
 
   const rect = canvas.getBoundingClientRect();
 
-  player.targetX = (e.clientX - rect.left);
+  player.targetX = e.clientX - rect.left;
 
-  player.targetY = (e.clientY - rect.top);
+  player.targetY = e.clientY - rect.top;
 
 });
 
-/* =========================
-
-   이동 애니메이션
-
-   ========================= */
+/* ========================= */
 
 function update(){
 
-  player.x += (player.targetX - player.x) * 0.1;
+  let dx = player.targetX - player.x;
 
-  player.y += (player.targetY - player.y) * 0.1;
+  let dy = player.targetY - player.y;
+
+  if(Math.abs(dx) > Math.abs(dy)){
+
+    player.direction = dx > 0 ? "right" : "left";
+
+  }else{
+
+    player.direction = dy > 0 ? "front" : "back";
+
+  }
+
+  player.x += dx * 0.1;
+
+  player.y += dy * 0.1;
 
   checkCollision();
 
 }
 
-/* =========================
-
-   충돌 체크 (가구 근처 가면 텍스트 출력)
-
-   ========================= */
+/* ========================= */
 
 let lastObject = null;
 
@@ -240,51 +300,33 @@ function checkCollision(){
 
 }
 
-/* =========================
-
-   그리기
-
-   ========================= */
+/* ========================= */
 
 function draw(){
 
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
-  /* 배경 (우리 집 바닥) */
+  /* 💖 배경 그리기 */
 
-  ctx.fillStyle = "#f8e8e8";
+  ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height);
 
-  ctx.fillRect(0,0,canvas.width,canvas.height);
-
-  /* 가구 그리기 (나중에 이미지로 교체 가능) */
+  /* 💖 가구 그리기 */
 
   objects.forEach(obj=>{
 
-    ctx.fillStyle = "#d4a5a5";
-
-    ctx.fillRect(obj.x, obj.y, obj.w, obj.h);
-
-    ctx.fillStyle = "#000";
-
-    ctx.font = "10px DungGeunMo";
-
-    ctx.fillText(obj.name, obj.x, obj.y - 5);
+    ctx.drawImage(obj.img, obj.x, obj.y, obj.w, obj.h);
 
   });
 
-  /* 캐릭터 (현재는 네모 → 이미지로 교체 가능) */
+  /* 💖 캐릭터 그리기 */
 
-  ctx.fillStyle = "#ff8fab";
+  const img = playerImages[player.direction];
 
-  ctx.fillRect(player.x - 10, player.y - 10, 20, 20);
+  ctx.drawImage(img, player.x - 16, player.y - 16, 32, 32);
 
 }
 
-/* =========================
-
-   게임 루프
-
-   ========================= */
+/* ========================= */
 
 function loop(){
 
