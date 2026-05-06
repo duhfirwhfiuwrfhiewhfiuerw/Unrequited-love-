@@ -79,14 +79,14 @@ const mapData = {
     station: {
         bg: "https://i.imgur.com/GvvmB4e.jpeg",
         objects: [
-            // 벤치를 아래쪽으로 더 내림 (y: 350 -> 390)
-            { name: 'bench', x: 140, y: 390, w: 160, h: 90, img: "https://i.imgur.com/LM0zkps.png" }, 
-            // 열차를 위쪽으로 더 올림 (y: 200 -> 140)
-            { name: 'train_body', x: 120, y: 140, w: 320, h: 220, img: "https://i.imgur.com/P0iVk3l.png" } 
+            // 벤치를 맨 아래로 더 내림 (y: 390 -> 410)
+            { name: 'bench', x: 140, y: 410, w: 160, h: 80, img: "https://i.imgur.com/LM0zkps.png" }, 
+            // 열차를 맨 위로 더 올림 (y: 140 -> 60)
+            { name: 'train_body', x: 100, y: 60, w: 320, h: 220, img: "https://i.imgur.com/P0iVk3l.png" } 
         ],
-        // 입구 위치도 열차 위치에 맞춰 조정
-        door: { x: 300, y: 160, w: 120, h: 100, target: "srt_inside" },
-        bounds: { minX: 30, maxX: 470, minY: 300, maxY: 470 }
+        // 입구 위치 조정 (열차의 중간 투명창 부근)
+        door: { x: 280, y: 100, w: 100, h: 120, target: "srt_inside" },
+        bounds: { minX: 30, maxX: 470, minY: 280, maxY: 480 }
     },
     srt_inside: {
         bg: "https://i.imgur.com/3N4o89c.png", 
@@ -137,7 +137,7 @@ function loadMap(mapName) {
     backgroundImg.src = mapData[mapName].bg;
 
     if(mapName === "station") {
-        player.x = 60; player.y = 440; // 역 진입 시 위치 조정
+        player.x = 60; player.y = 440;
         addText("송정역에 도착했어! 벤치랑 열차를 클릭해봐 ✨");
     } else if(mapName === "room") {
         player.x = 400; player.y = 300;
@@ -150,9 +150,9 @@ function loadMap(mapName) {
 function checkCollision(nx, ny) {
     const objects = mapData[currentMap].objects;
     for (let obj of objects) {
-        // 충돌 판정 여유를 15로 줄여서 더 부드럽게 통과하게 함
-        if (nx > obj.x - 15 && nx < obj.x + obj.w + 15 &&
-            ny > obj.y - 10 && ny < obj.y + obj.h + 10) {
+        // 충돌 여유 공간을 5로 최소화하여 거의 닿기 직전까지 이동 가능하게 수정
+        if (nx > obj.x + 10 && nx < obj.x + obj.w - 10 &&
+            ny > obj.y + 10 && ny < obj.y + obj.h - 10) {
             return true;
         }
     }
