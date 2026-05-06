@@ -9,29 +9,71 @@
         body { margin: 0; background: #fff3f6; font-family: 'DungGeunMo', monospace; display: flex; flex-direction: column; align-items: center; padding: 20px 0; overflow-x: hidden; }
         canvas { width: 100%; max-width: 500px; background: #fdf6f0; border: 3px solid #e8cfcf; image-rendering: pixelated; border-radius: 10px; cursor: pointer; }
 
-        /* ✨ 텍스트박스 */
+        /* ✨ 텍스트박스 디자인 */
         #textBox {
-            width: 95%; max-width: 500px; min-height: 120px; margin-top: 20px; padding: 22px;
+            width: 95%;
+            max-width: 500px;
+            min-height: 130px;
+            margin-top: 20px;
+            padding: 22px;
             background: linear-gradient(135deg, #ffffff 0%, #fff5f7 100%);
-            border: 4px solid #e8cfcf; box-shadow: inset 0 0 0 2px #ffffff, 5px 5px 0px rgba(232, 207, 207, 0.5);
-            border-radius: 15px; box-sizing: border-box; line-height: 1.8; color: #5a4f4f; font-size: 16px; position: relative; word-break: keep-all;
+            border: 4px solid #e8cfcf;
+            box-shadow: inset 0 0 0 2px #ffffff, 5px 5px 0px rgba(232, 207, 207, 0.5);
+            border-radius: 15px;
+            box-sizing: border-box;
+            line-height: 1.8;
+            color: #5a4f4f;
+            font-size: 16px;
+            position: relative;
+            word-break: keep-all;
         }
-        #textBox::after { content: ' ▼'; position: absolute; bottom: 15px; right: 20px; color: #ffb6c1; font-size: 14px; animation: blink 0.8s infinite; }
-        @keyframes blink { 0%, 100% { opacity: 1; transform: translateY(0); } 50% { opacity: 0.3; transform: translateY(2px); } }
 
-        /* 🎵 유튜브 숨기기 레이아웃 */
-        .music-info { margin-top: 15px; font-size: 14px; color: #b5a3a3; display: flex; align-items: center; gap: 8px; }
-        #yt-player { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+        #textBox::after {
+            content: ' ▼';
+            position: absolute;
+            bottom: 15px;
+            right: 20px;
+            color: #ffb6c1;
+            font-size: 14px;
+            animation: blink 0.8s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; transform: translateY(0); }
+            50% { opacity: 0.3; transform: translateY(2px); }
+        }
+
+        /* 🎵 유튜브 브금 레이아웃 (숨김 처리) */
+        .music-player {
+            margin-top: 15px;
+            width: 95%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+        .music-label {
+            font-size: 12px;
+            color: #e8cfcf;
+        }
+        #yt-player {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
 
 <canvas id="game"></canvas>
-<div id="textBox">지수의 방에 온걸 환영해! 오른쪽 문을 통해 밖으로 나갈 수 있어 🚪✨</div>
+<div id="textBox">지수의 방에 온걸 환영해! 캐릭터를 가구쪽으로 움직여봐 💗</div>
 
-<!-- 🎵 유튜브 화면은 숨기고 자동 재생 설정 -->
-<div class="music-info">
-    <span>Now Playing: 동물의 숲 브금 🍃</span>
+<!-- 🎵 자동 재생 및 화면 숨김 적용 -->
+<div class="music-player">
+    <div class="music-label">Now Playing: 동물의 숲 브금 🍃</div>
     <iframe id="yt-player"
         src="https://www.youtube.com/embed/GYediWu_ixw?autoplay=1&loop=1&playlist=GYediWu_ixw&enablejsapi=1" 
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
@@ -41,11 +83,11 @@
 <script>
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
+
 canvas.width = 500;
 canvas.height = 500;
 
-// 🗺️ 맵 데이터 (방과 정원 분리)
-let currentMap = "room"; 
+let currentMap = "room"; // 현재 맵 상태
 
 const mapData = {
     room: {
@@ -57,30 +99,34 @@ const mapData = {
             { name: 'kitchen', label: '부엌', x: 40, y: 350, w: 110, h: 80, img: "https://i.imgur.com/86AUFui.png" },
             { name: 'table', label: '테이블', x: 205, y: 350, w: 90, h: 70, img: "https://i.imgur.com/EnAb1YP.png" },
             { name: 'bath', label: '욕실', x: 380, y: 350, w: 80, h: 70, img: "https://i.imgur.com/viVc6C0.png" }
-        ],
-        welcomeMsg: "지수의 방이야. 가구들을 살펴보거나 오른쪽 문으로 나가봐!"
+        ]
     },
     garden: {
         bg: "https://i.imgur.com/vHInE3r.png", // 정원 배경
         objects: [
             { name: 'tree', label: '나무', x: 100, y: 150, w: 100, h: 120, img: "https://i.imgur.com/hV8fGIm.png" },
             { name: 'mailbox', label: '우체통', x: 400, y: 350, w: 40, h: 60, img: "https://i.imgur.com/5yPq2uO.png" }
-        ],
-        welcomeMsg: "와! 밖으로 나왔어. 공기가 정말 좋다! 🌷"
+        ]
     }
 };
 
-// 이미지 로딩
-const bgImg = new Image();
-const playerImages = { front: new Image(), back: new Image(), left: new Image(), right: new Image() };
+const backgroundImg = new Image();
+const playerImages = {
+    front: new Image(), back: new Image(), left: new Image(), right: new Image()
+};
 playerImages.front.src = "https://i.imgur.com/l1ENJqo.png";
 playerImages.back.src = "https://i.imgur.com/nbzUAfX.png";
 playerImages.left.src = "https://i.imgur.com/ginoxYa.png";
 playerImages.right.src = "https://i.imgur.com/Kn58OH2.png";
 
-let player = { x: 250, y: 300, size: 55, step: 60, direction: "front", name: "지수" };
+let player = {
+    x: 250, y: 300,
+    size: 55,
+    step: 80, 
+    direction: "front",
+    name: "지수"
+};
 
-// ✨ 원본 코드의 대사들 완벽 유지
 const messages = {
     tv: "어렸을때 티비를 자주봤어. 만화 위주로 봤었던 것같은데 요즘은 잘 안봐",
     bed: "중요한 날이니까 일찍 일어나야해! 알람맞춰놓고 열차시간 맞춰서 일어났어",
@@ -88,23 +134,23 @@ const messages = {
     bath: "여긴 내가 화장하는 곳이야 따로 화장대가 없어서 여기서 자주 치장해. 얼른 준비해야지!",
     closet: "이건 옷장이야. 중요한 날에는 무슨옷을 입어야 잘보일지 고민을 많이해서 지각한적이 있어",
     kitchen: "오빠한테 도시락을 만들어줘야해 하지만 한번에 성공한적이 없어",
-    tree: "정말 커다란 나무야. 그늘 아래 있으면 시원할 것 같아.",
-    mailbox: "누구한테 편지가 온 걸까? 나중에 확인해봐야지."
+    tree: "정말 커다란 나무야. 그늘이 시원해.",
+    mailbox: "편지가 왔나 확인해볼까?"
 };
 
 function loadMap(mapName) {
     currentMap = mapName;
-    bgImg.src = mapData[mapName].bg;
+    backgroundImg.src = mapData[mapName].bg;
     mapData[mapName].objects.forEach(obj => {
         obj.imgObj = new Image();
         obj.imgObj.src = obj.img;
     });
 
-    // 맵 이동 시 플레이어 위치 조정
-    if(mapName === "garden") { player.x = 60; } 
-    else { player.x = 440; }
-    
-    typeText(mapData[mapName].welcomeMsg);
+    if(mapName === "garden") {
+        player.x = 60; // 정원 입장 시 위치
+    } else {
+        player.x = 440; // 방 입장 시 위치
+    }
 }
 
 loadMap("room");
@@ -140,7 +186,7 @@ canvas.addEventListener('click', (e) => {
         else { nextY -= player.step; player.direction = "back"; }
     }
 
-    // 🚪 맵 전환 로직 (오른쪽 문 영역 체크)
+    // 🚪 맵 전환 (오른쪽 벽으로 나갈 때)
     if (currentMap === "room" && nextX > 470) {
         loadMap("garden");
         return;
@@ -150,16 +196,20 @@ canvas.addEventListener('click', (e) => {
         return;
     }
 
-    // 경계 및 충돌 체크
-    if (nextX < 20 || nextX > 480 || nextY < 100 || nextY > 480) return; 
+    if (nextX < 30 || nextX > canvas.width - 30 || nextY < 110 || nextY > 470) return; 
 
     let canMove = true;
     mapData[currentMap].objects.forEach(obj => {
         if (nextX > obj.x - 10 && nextX < obj.x + obj.w + 10 &&
-            nextY > obj.y - 10 && nextY < obj.y + obj.h + 10) canMove = false;
+            nextY > obj.y - 10 && nextY < obj.y + obj.h + 10) {
+            canMove = false;
+        }
     });
 
-    if (canMove) { player.x = nextX; player.y = nextY; }
+    if (canMove) {
+        player.x = nextX;
+        player.y = nextY;
+    }
     checkProximity();
 });
 
@@ -168,34 +218,58 @@ function checkProximity() {
         const dx = player.x - (obj.x + obj.w / 2);
         const dy = player.y - (obj.y + obj.h / 2);
         const range = 65; 
+
         let isFacing = false;
         if (player.direction === "right" && dx < 0 && Math.abs(dx) < range + obj.w/2 && Math.abs(dy) < obj.h/2 + 20) isFacing = true;
         if (player.direction === "left" && dx > 0 && Math.abs(dx) < range + obj.w/2 && Math.abs(dy) < obj.h/2 + 20) isFacing = true;
         if (player.direction === "front" && dy < 0 && Math.abs(dy) < range + obj.h/2 && Math.abs(dx) < obj.w/2 + 20) isFacing = true;
         if (player.direction === "back" && dy > 0 && Math.abs(dy) < range + obj.h/2 && Math.abs(dx) < obj.w/2 + 20) isFacing = true;
-        if (isFacing) typeText(messages[obj.name]);
+
+        if (isFacing) {
+            typeText(messages[obj.name]);
+        }
     });
+}
+
+function drawLabels() {
+    ctx.font = "12px 'DungGeunMo'";
+    ctx.textAlign = "center";
+    mapData[currentMap].objects.forEach(obj => {
+        const labelY = obj.y + obj.h + 15;
+        ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+        ctx.fillRect(obj.x + obj.w/2 - 20, labelY - 12, 40, 16);
+        ctx.fillStyle = "#b5a3a3"; 
+        ctx.fillText(obj.label, obj.x + obj.w/2, labelY);
+    });
+}
+
+function drawNameTag() {
+    const tagW = 40;
+    const tagH = 20;
+    const tagX = player.x - tagW / 2;
+    const tagY = player.y - player.size / 2 - 20;
+    ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+    ctx.fillRect(tagX, tagY, tagW, tagH);
+    ctx.fillStyle = "white";
+    ctx.font = "14px 'DungGeunMo'";
+    ctx.textAlign = "center";
+    ctx.fillText(player.name, player.x, tagY + 15);
 }
 
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
-    
+    ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height);
+    drawLabels();
     mapData[currentMap].objects.forEach(obj => {
-        if (obj.imgObj && obj.imgObj.complete) ctx.drawImage(obj.imgObj, obj.x, obj.y, obj.w, obj.h);
+        if (obj.imgObj && obj.imgObj.complete) {
+            ctx.drawImage(obj.imgObj, obj.x, obj.y, obj.w, obj.h);
+        }
     });
-
     const img = playerImages[player.direction];
-    if (img.complete) ctx.drawImage(img, player.x - player.size / 2, player.y - player.size / 2, player.size, player.size);
-    
-    // 네임택
-    ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
-    ctx.fillRect(player.x - 20, player.y - 45, 40, 20);
-    ctx.fillStyle = "white";
-    ctx.font = "14px 'DungGeunMo'";
-    ctx.textAlign = "center";
-    ctx.fillText(player.name, player.x, player.y - 30);
-
+    if (img.complete) {
+        ctx.drawImage(img, player.x - player.size / 2, player.y - player.size / 2, player.size, player.size);
+    }
+    drawNameTag();
     requestAnimationFrame(draw);
 }
 draw();
