@@ -24,10 +24,10 @@
 <body>
 
 <canvas id="game"></canvas>
-<div id="textBox">지수의 방에 온걸 환영해! 가구를 클릭하면 지수가 이동하며 문구가 뜰거야 💗</div>
+<div id="textBox">지수의 방에 온걸 환영해! 가구를 클릭하면 지수가 이동하며 말을 할 거야 💗</div>
 
 <div class="music-player">
-    <div class="music-label">Now Playing: 동물의 숲 🍃</div>
+    <div class="music-label">Now Playing: 동물의 숲 브금 🍃</div>
     <iframe id="yt-player"
         src="https://www.youtube.com/embed/GYediWu_ixw?autoplay=1&loop=1&playlist=GYediWu_ixw&enablejsapi=1" 
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
@@ -54,18 +54,12 @@ const mapData = {
         door: { x: 460, y: 200, w: 40, h: 100, target: "station" }
     },
     station: {
-        bg: "https://i.imgur.com/utK3QUS.png", // 제공해주신 기차역 이미지로 교체됨
+        bg: "https://i.imgur.com/vHInE3r.png", // 제공해주신 기차역 이미지
         objects: [
-            { name: 'bench', x: 320, y: 440, w: 130, h: 180, img: "" }, // 투명 클릭 영역 (의자)
-            { name: 'train_body', x: 500, y: 230, w: 250, h: 500, img: "" } // 투명 클릭 영역 (열차 몸체)
+            { name: 'bench', x: 320, y: 440, w: 130, h: 180, img: "" }, // 투명 의자 영역
+            { name: 'train_body', x: 500, y: 230, w: 250, h: 500, img: "" } // 투명 열차 영역
         ],
-        // 열차 내부로 들어가는 투명 입구 영역 (좌표는 이미지에 맞춰 조정 가능)
         door: { x: 650, y: 450, w: 80, h: 120, target: "srt_inside" } 
-    },
-    srt_inside: {
-        bg: "https://via.placeholder.com/500x500.png?text=SRT+Inside", // 다음 페이지 배경
-        objects: [],
-        door: { x: 0, y: 200, w: 40, h: 100, target: "station" }
     }
 };
 
@@ -85,7 +79,6 @@ const messages = {
     bath: "여긴 내가 화장하는 곳이야 따로 화장대가 없어서 여기서 자주 치장해. 얼른 준비해야지!",
     closet: "이건 옷장이야. 중요한 날에는 무슨옷을 입어야 잘보일지 고민을 많이해서 지각한적이 있어",
     kitchen: "오빠한테 도시락을 만들어줘야해 하지만 한번에 성공한적이 없어",
-    // 기차역 문구 추가
     bench: " 조금 일찍 도착했으니까 여기서 열차를 기다릴수 있어 ",
     train_body: " 내가 타야하는 열차야! 일찍 도착했으니까 빨리타서 안에서 기다리자. 열차에 투명부분을 눌러봐! "
 };
@@ -99,10 +92,13 @@ function loadMap(mapName) {
             obj.imgObj.src = obj.img; 
         }
     });
-    // 시작 위치 조정
-    if(mapName === "station") player.x = 100;
-    else if(mapName === "room") player.x = 420;
-    else player.x = 250;
+
+    if(mapName === "station") {
+        player.x = 100;
+        typeText("송정역에 도착했어! 오브젝트들을 클릭해봐"); // 맵 이동 시 첫 안내 문구
+    } else if(mapName === "room") {
+        player.x = 420;
+    }
 }
 loadMap("room");
 
@@ -125,14 +121,12 @@ function handleInteraction(e) {
     const clickX = (e.clientX - rect.left) * scaleX;
     const clickY = (e.clientY - rect.top) * scaleY;
 
-    // 1. 문(포탈) 클릭 시 맵 이동
     const door = mapData[currentMap].door;
     if (clickX > door.x && clickX < door.x + door.w && clickY > door.y && clickY < door.y + door.h) {
         loadMap(door.target);
         return;
     }
 
-    // 2. 오브젝트 클릭 감지
     let targetObj = null;
     mapData[currentMap].objects.forEach(obj => {
         if (clickX > obj.x && clickX < obj.x + obj.w && clickY > obj.y && clickY < obj.y + obj.h) {
@@ -140,7 +134,6 @@ function handleInteraction(e) {
         }
     });
 
-    // 3. 이동 및 방향 설정
     let nextX = player.x;
     let nextY = player.y;
     const diffX = clickX - player.x;
@@ -154,13 +147,11 @@ function handleInteraction(e) {
         else { nextY -= player.step; player.direction = "back"; }
     }
 
-    // 경계 제한
     if (nextX < 40) nextX = 40; if (nextX > 460) nextX = 460;
     if (nextY < 150) nextY = 150; if (nextY > 450) nextY = 450;
 
     player.x = nextX; player.y = nextY;
 
-    // 4. 문구 출력
     if (targetObj) {
         typeText(messages[targetObj.name]);
     }
@@ -168,12 +159,10 @@ function handleInteraction(e) {
 
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height);
-    
+    if (backgroundImg.complete) ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height);
     mapData[currentMap].objects.forEach(obj => {
         if (obj.imgObj && obj.imgObj.complete) ctx.drawImage(obj.imgObj, obj.x, obj.y, obj.w, obj.h);
     });
-
     const img = playerImages[player.direction];
     if (img.complete) ctx.drawImage(img, player.x - player.size / 2, player.y - player.size / 2, player.size, player.size);
     
