@@ -3,129 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>지수 일기</title>
+    <title>지수 일기 - 새로운 시작</title>
     <link href="https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2107@1.1/DungGeunMo.css" rel="stylesheet">
     <style>
-        body { margin: 0; background: #fff3f6; font-family: 'DungGeunMo', monospace; display: flex; flex-direction: column; align-items: center; padding: 20px 0; }
-        canvas { width: 100%; max-width: 500px; background: #fdf6f0; border: 3px solid #e8cfcf; image-rendering: pixelated; border-radius: 10px; }
+        body { margin: 0; background: #fff3f6; font-family: 'DungGeunMo', monospace; display: flex; flex-direction: column; align-items: center; padding: 20px 0; overflow-x: hidden; }
+        canvas { width: 100%; max-width: 500px; background: #fdf6f0; border: 3px solid #e8cfcf; image-rendering: pixelated; border-radius: 10px; cursor: pointer; }
 
-        /* ✨ 텍스트박스 디자인 */
+        /* ✨ 텍스트박스 */
         #textBox {
-            width: 95%;
-            max-width: 500px;
-            min-height: 130px;
-            margin-top: 20px;
-            padding: 22px;
+            width: 95%; max-width: 500px; min-height: 100px; margin-top: 20px; padding: 22px;
             background: linear-gradient(135deg, #ffffff 0%, #fff5f7 100%);
-            border: 4px solid #e8cfcf;
-            box-shadow: inset 0 0 0 2px #ffffff, 5px 5px 0px rgba(232, 207, 207, 0.5);
-            border-radius: 15px;
-            box-sizing: border-box;
-            line-height: 1.8;
-            color: #5a4f4f;
-            font-size: 16px;
-            position: relative;
-            word-break: keep-all;
+            border: 4px solid #e8cfcf; box-shadow: inset 0 0 0 2px #ffffff, 5px 5px 0px rgba(232, 207, 207, 0.5);
+            border-radius: 15px; box-sizing: border-box; line-height: 1.8; color: #5a4f4f; font-size: 16px; position: relative; word-break: keep-all;
         }
+        #textBox::after { content: ' ▼'; position: absolute; bottom: 15px; right: 20px; color: #ffb6c1; font-size: 14px; animation: blink 0.8s infinite; }
+        @keyframes blink { 0%, 100% { opacity: 1; transform: translateY(0); } 50% { opacity: 0.3; transform: translateY(2px); } }
 
-        #textBox::after {
-            content: ' ▼';
-            position: absolute;
-            bottom: 15px;
-            right: 20px;
-            color: #ffb6c1;
-            font-size: 14px;
-            animation: blink 0.8s infinite;
-        }
-
-        @keyframes blink {
-            0%, 100% { opacity: 1; transform: translateY(0); }
-            50% { opacity: 0.3; transform: translateY(2px); }
-        }
-
-        /* 🎵 유튜브 브금 레이아웃 */
-        .music-player {
-            margin-top: 15px;
-            width: 95%;
-            max-width: 500px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 5px;
-        }
-        .music-label {
-            font-size: 12px;
-            color: #e8cfcf;
-        }
+        /* 🎵 유튜브 숨기기 레이아웃 */
+        .music-info { margin-top: 15px; font-size: 14px; color: #b5a3a3; display: flex; align-items: center; gap: 8px; }
+        #yt-player { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
     </style>
 </head>
 <body>
 
 <canvas id="game"></canvas>
-<div id="textBox">지수의 방에 온걸 환영해! 캐릭터를 가구쪽으로 움직여봐 💗</div>
+<div id="textBox">지수의 방에 온걸 환영해! 오른쪽 문을 통해 밖으로 나갈 수 있어 🚪✨</div>
 
-<!-- 🎵 요청하신 음악으로 교체 완료 -->
-<div class="music-player">
-    <div class="music-label">Now Playing: 너드 - 지수(JISOO) 🎶</div>
-    <iframe width="300" height="60" 
-        src="https://www.youtube.com/embed/GYediWu_ixw?autoplay=1&loop=1&playlist=GYediWu_ixw" 
-        title="BGM" frameborder="0" 
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-        allowfullscreen>
+<!-- 🎵 나우 플레잉 정보 (유튜브 화면은 숨김) -->
+<div class="music-info">
+    <span>Now Playing: 동물의 숲 브금 🍃</span>
+    <iframe id="yt-player"
+        src="https://www.youtube.com/embed/GYediWu_ixw?autoplay=1&loop=1&playlist=GYediWu_ixw&enablejsapi=1" 
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
     </iframe>
 </div>
 
 <script>
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
-
 canvas.width = 500;
 canvas.height = 500;
 
-const backgroundImg = new Image();
-backgroundImg.src = "https://i.imgur.com/bMfMr3n.png";
+// 맵 데이터 관리
+let currentMap = "room"; // 'room' 또는 'garden'
 
-const playerImages = {
-    front: new Image(), back: new Image(), left: new Image(), right: new Image()
+const mapData = {
+    room: {
+        bg: "https://i.imgur.com/bMfMr3n.png",
+        objects: [
+            { name: 'closet', label: '옷장', x: 40, y: 110, w: 70, h: 90, img: "https://i.imgur.com/GMdqkYn.png" }, 
+            { name: 'bed', label: '침대', x: 200, y: 110, w: 100, h: 80, img: "https://i.imgur.com/gxjbbIY.png" },
+            { name: 'tv', label: 'TV', x: 380, y: 110, w: 80, h: 70, img: "https://i.imgur.com/x95Hwnw.png" },
+            { name: 'kitchen', label: '부엌', x: 40, y: 350, w: 110, h: 80, img: "https://i.imgur.com/86AUFui.png" },
+            { name: 'table', label: '테이블', x: 205, y: 350, w: 90, h: 70, img: "https://i.imgur.com/EnAb1YP.png" },
+            { name: 'bath', label: '욕실', x: 380, y: 350, w: 80, h: 70, img: "https://i.imgur.com/viVc6C0.png" }
+        ],
+        welcomeMsg: "방 안이 아늑하네. 가구들을 살펴보거나 오른쪽 문으로 나가봐!"
+    },
+    garden: {
+        bg: "https://i.imgur.com/vHInE3r.png", // 새로운 배경 (정원/실외 느낌 예시)
+        objects: [
+            { name: 'tree', label: '나무', x: 100, y: 150, w: 100, h: 120, img: "https://i.imgur.com/hV8fGIm.png" },
+            { name: 'mailbox', label: '우체통', x: 400, y: 350, w: 40, h: 60, img: "https://i.imgur.com/5yPq2uO.png" }
+        ],
+        welcomeMsg: "와! 밖으로 나왔어. 공기가 정말 좋다!"
+    }
 };
+
+// 이미지 캐싱
+const bgImg = new Image();
+const playerImages = { front: new Image(), back: new Image(), left: new Image(), right: new Image() };
 playerImages.front.src = "https://i.imgur.com/l1ENJqo.png";
 playerImages.back.src = "https://i.imgur.com/nbzUAfX.png";
 playerImages.left.src = "https://i.imgur.com/ginoxYa.png";
 playerImages.right.src = "https://i.imgur.com/Kn58OH2.png";
 
-let player = {
-    x: 250, y: 300,
-    size: 55,
-    step: 80, 
-    direction: "front",
-    name: "지수"
-};
-
-const objects = [
-    { name: 'closet', label: '옷장', x: 40, y: 110, w: 70, h: 90, img: "https://i.imgur.com/GMdqkYn.png" }, 
-    { name: 'bed', label: '침대', x: 200, y: 110, w: 100, h: 80, img: "https://i.imgur.com/gxjbbIY.png" },
-    { name: 'tv', label: 'TV', x: 380, y: 110, w: 80, h: 70, img: "https://i.imgur.com/x95Hwnw.png" },
-    { name: 'kitchen', label: '부엌', x: 40, y: 350, w: 110, h: 80, img: "https://i.imgur.com/86AUFui.png" },
-    { name: 'table', label: '테이블', x: 205, y: 350, w: 90, h: 70, img: "https://i.imgur.com/EnAb1YP.png" },
-    { name: 'bath', label: '욕실', x: 380, y: 350, w: 80, h: 70, img: "https://i.imgur.com/viVc6C0.png" }
-];
-
-objects.forEach(obj => {
-    obj.imgObj = new Image();
-    obj.imgObj.src = obj.img;
-});
-
+let player = { x: 250, y: 300, size: 55, step: 60, direction: "front", name: "지수" };
 const messages = {
-    tv: "어렸을때 티비를 자주봤어. 만화 위주로 봤었던 것같은데 요즘은 잘 안봐",
-    bed: "중요한 날이니까 일찍 일어나야해! 알람맞춰놓고 열차시간 맞춰서 일어났어",
-    table: "화장 다 하고 버스기다릴때 앉아있어야지 오빠한테 카톡보내놔야겠다",
-    bath: "여긴 내가 화장하는 곳이야 따로 화장대가 없어서 여기서 자주 치장해. 얼른 준비해야지!",
-    closet: "이건 옷장이야. 중요한 날에는 무슨옷을 입어야 잘보일지 고민을 많이해서 지각한적이 있어",
-    kitchen: "오빠한테 도시락을 만들어줘야해 하지만 한번에 성공한적이 없어"
+    tv: "만화 위주로 봤었던 것같은데 요즘은 잘 안봐",
+    bed: "중요한 날이니까 일찍 일어나야해!",
+    table: "오빠한테 카톡보내놔야겠다",
+    bath: "얼른 준비해야지!",
+    closet: "중요한 날에는 무슨옷을 입을지 고민돼",
+    kitchen: "도시락을 만들어줘야해!",
+    tree: "정말 커다란 나무야. 그늘이 시원해.",
+    mailbox: "편지가 왔나 확인해볼까?"
 };
+
+function loadMap(mapName) {
+    currentMap = mapName;
+    bgImg.src = mapData[mapName].bg;
+    
+    mapData[mapName].objects.forEach(obj => {
+        obj.imgObj = new Image();
+        obj.imgObj.src = obj.img;
+    });
+
+    // 맵 이동 시 플레이어 위치 조정
+    if(mapName === "garden") {
+        player.x = 60; // 왼쪽 입구에서 등장
+    } else {
+        player.x = 440; // 오른쪽 문에서 등장
+    }
+    typeText(mapData[mapName].welcomeMsg);
+}
+
+loadMap("room");
 
 let lastMessage = "";
-
 function typeText(text) {
     if (lastMessage === text) return;
     lastMessage = text;
@@ -156,80 +141,63 @@ canvas.addEventListener('click', (e) => {
         else { nextY -= player.step; player.direction = "back"; }
     }
 
-    if (nextX < 30 || nextX > canvas.width - 30 || nextY < 110 || nextY > 470) return; 
+    // 맵 전환 로직 (오른쪽 문 뚫린 곳 좌표 체크)
+    if (currentMap === "room" && nextX > 470) {
+        loadMap("garden");
+        return;
+    }
+    if (currentMap === "garden" && nextX < 30) {
+        loadMap("room");
+        return;
+    }
 
+    // 경계 제한
+    if (nextX < 20 || nextX > 480 || nextY < 100 || nextY > 480) return; 
+
+    // 충돌 체크
     let canMove = true;
-    objects.forEach(obj => {
+    mapData[currentMap].objects.forEach(obj => {
         if (nextX > obj.x - 10 && nextX < obj.x + obj.w + 10 &&
-            nextY > obj.y - 10 && nextY < obj.y + obj.h + 10) {
-            canMove = false;
-        }
+            nextY > obj.y - 10 && nextY < obj.y + obj.h + 10) canMove = false;
     });
 
-    if (canMove) {
-        player.x = nextX;
-        player.y = nextY;
-    }
+    if (canMove) { player.x = nextX; player.y = nextY; }
     checkProximity();
 });
 
 function checkProximity() {
-    objects.forEach(obj => {
+    mapData[currentMap].objects.forEach(obj => {
         const dx = player.x - (obj.x + obj.w / 2);
         const dy = player.y - (obj.y + obj.h / 2);
         const range = 65; 
-
         let isFacing = false;
         if (player.direction === "right" && dx < 0 && Math.abs(dx) < range + obj.w/2 && Math.abs(dy) < obj.h/2 + 20) isFacing = true;
         if (player.direction === "left" && dx > 0 && Math.abs(dx) < range + obj.w/2 && Math.abs(dy) < obj.h/2 + 20) isFacing = true;
         if (player.direction === "front" && dy < 0 && Math.abs(dy) < range + obj.h/2 && Math.abs(dx) < obj.w/2 + 20) isFacing = true;
         if (player.direction === "back" && dy > 0 && Math.abs(dy) < range + obj.h/2 && Math.abs(dx) < obj.w/2 + 20) isFacing = true;
-
-        if (isFacing) {
-            typeText(messages[obj.name]);
-        }
+        if (isFacing) typeText(messages[obj.name]);
     });
-}
-
-function drawLabels() {
-    ctx.font = "12px 'DungGeunMo'";
-    ctx.textAlign = "center";
-    objects.forEach(obj => {
-        const labelY = obj.y + obj.h + 15;
-        ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
-        ctx.fillRect(obj.x + obj.w/2 - 20, labelY - 12, 40, 16);
-        ctx.fillStyle = "#b5a3a3"; 
-        ctx.fillText(obj.label, obj.x + obj.w/2, labelY);
-    });
-}
-
-function drawNameTag() {
-    const tagW = 40;
-    const tagH = 20;
-    const tagX = player.x - tagW / 2;
-    const tagY = player.y - player.size / 2 - 20;
-    ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
-    ctx.fillRect(tagX, tagY, tagW, tagH);
-    ctx.fillStyle = "white";
-    ctx.font = "14px 'DungGeunMo'";
-    ctx.textAlign = "center";
-    ctx.fillText(player.name, player.x, tagY + 15);
 }
 
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height);
-    drawLabels();
-    objects.forEach(obj => {
-        if (obj.imgObj.complete) {
-            ctx.drawImage(obj.imgObj, obj.x, obj.y, obj.w, obj.h);
-        }
+    ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
+    
+    mapData[currentMap].objects.forEach(obj => {
+        if (obj.imgObj.complete) ctx.drawImage(obj.imgObj, obj.x, obj.y, obj.w, obj.h);
     });
+
     const img = playerImages[player.direction];
-    if (img.complete) {
-        ctx.drawImage(img, player.x - player.size / 2, player.y - player.size / 2, player.size, player.size);
-    }
-    drawNameTag();
+    if (img.complete) ctx.drawImage(img, player.x - player.size / 2, player.y - player.size / 2, player.size, player.size);
+    
+    // 네임택
+    ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+    ctx.fillRect(player.x - 20, player.y - 45, 40, 20);
+    ctx.fillStyle = "white";
+    ctx.font = "14px 'DungGeunMo'";
+    ctx.textAlign = "center";
+    ctx.fillText(player.name, player.x, player.y - 30);
+
     requestAnimationFrame(draw);
 }
 draw();
