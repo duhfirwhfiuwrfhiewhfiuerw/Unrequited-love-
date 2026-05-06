@@ -77,23 +77,21 @@ canvas{
 <script>
 
 const canvas = document.getElementById('game');
-
 const ctx = canvas.getContext('2d');
-
 canvas.width = 500;
-
 canvas.height = 300;
 
-/* =========================
+// 이미지 로딩 확인용 카운터
+let imagesLoaded = 0;
+const totalImages = 5; // 배경1 + 캐릭터1(현재는 front만 사용 중이므로) + 가구... (필요에 따라 조정)
 
-   💖 배경 이미지 넣는 곳
-
-   ========================= */
+function imageLoaded() {
+    imagesLoaded++;
+}
 
 const backgroundImg = new Image();
-
 backgroundImg.src = "https://i.imgur.com/bMfMr3n.png";
-
+backgroundImg.onload = imageLoaded;
 /* =========================
 
    💖 캐릭터 이미지 넣는 곳
@@ -101,17 +99,11 @@ backgroundImg.src = "https://i.imgur.com/bMfMr3n.png";
    ========================= */
 
 const playerImages = {
-
   front: new Image(),
-
   back: new Image(),
-
   left: new Image(),
-
   right: new Image()
-
 };
-
 playerImages.front.src = "https://i.imgur.com/zDYhPLP.jpeg";
 
 playerImages.back.src = "뒷모습 링크";
@@ -127,19 +119,13 @@ playerImages.right.src = "오른쪽 링크";
    ========================= */
 
 let player = {
-
   x: 250,
-
   y: 150,
-
-  size: 32,
-
+  size: 60, // 캐릭터 크기 조절
   targetX: 250,
-
   targetY: 150,
-
-  direction: "front"
-
+  direction: "front",
+  speed: 0.05 // 이동 속도 조절 (0.1은 너무 빠를 수 있음)
 };
 
 /* =========================
@@ -247,27 +233,22 @@ canvas.addEventListener('click', (e)=>{
 /* ========================= */
 
 function update(){
-
   let dx = player.targetX - player.x;
-
   let dy = player.targetY - player.y;
 
+  // 목적지에 거의 도착하면 멈춤 (덜덜 떨리는 현상 방지)
+  if(Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
+
   if(Math.abs(dx) > Math.abs(dy)){
-
     player.direction = dx > 0 ? "right" : "left";
-
-  }else{
-
+  } else {
     player.direction = dy > 0 ? "front" : "back";
-
   }
 
-  player.x += dx * 0.1;
-
-  player.y += dy * 0.1;
-
+  player.x += dx * player.speed;
+  player.y += dy * player.speed;
+  
   checkCollision();
-
 }
 
 /* ========================= */
@@ -303,39 +284,32 @@ function checkCollision(){
 /* ========================= */
 
 function draw(){
-
   ctx.clearRect(0,0,canvas.width,canvas.height);
-
-  /* 💖 배경 그리기 */
-
+  
+  // 배경 그리기
   ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height);
 
-  /* 💖 가구 그리기 */
-
+  // 가구 그리기
   objects.forEach(obj=>{
-
-    ctx.drawImage(obj.img, obj.x, obj.y, obj.w, obj.h);
-
+    if(obj.img.complete) { // 이미지가 로드된 경우에만 그림
+        ctx.drawImage(obj.img, obj.x, obj.y, obj.w, obj.h);
+    }
   });
 
-  /* 💖 캐릭터 그리기 */
-
+  // 캐릭터 그리기
   const img = playerImages[player.direction];
-
-  ctx.drawImage(img, player.x - 16, player.y - 16, 32, 32);
-
+  if(img.complete) {
+      // 캐릭터를 중앙 점 기준으로 그림
+      ctx.drawImage(img, player.x - player.size/2, player.y - player.size/2, player.size, player.size);
+  }
 }
 
 /* ========================= */
 
 function loop(){
-
   update();
-
   draw();
-
   requestAnimationFrame(loop);
-
 }
 
 loop();
