@@ -57,12 +57,12 @@ const mapData = {
     station: {
         bg: "https://i.imgur.com/GvvmB4e.jpeg",
         objects: [
-            // 여기에 벤치 이미지 링크를 따옴표 사이에 넣으세요 (현재는 투명)
-            { name: 'https://i.imgur.com/LM0zkps.png', x: 250, y: 380, w: 120, h: 100, img: "" }, 
-            // 여기에 열차 이미지 링크를 따옴표 사이에 넣으세요 (현재는 투명)
-            { name: 'https://i.imgur.com/P0iVk3l.png', x: 0, y: 0, w: 500, h: 280, img: "" } 
+            // 벤치: 가운데 배열
+            { name: 'bench', x: 190, y: 370, w: 120, h: 80, img: "https://i.imgur.com/LM0zkps.png" }, 
+            // 열차: 오른쪽 배열 (배경에 맞춰 조정)
+            { name: 'train_body', x: 250, y: 50, w: 250, h: 220, img: "https://i.imgur.com/P0iVk3l.png" } 
         ],
-        door: { x: 210, y: 150, w: 80, h: 150, target: "srt_inside" },
+        door: { x: 320, y: 180, w: 100, h: 100, target: "srt_inside" },
         bounds: { minX: 30, maxX: 470, minY: 320, maxY: 460 }
     },
     srt_inside: {
@@ -97,7 +97,10 @@ function loadMap(mapName) {
     currentMap = mapName;
     backgroundImg.src = mapData[mapName].bg;
     
-    // 맵 이동 시 해당 맵의 이미지 오브젝트들 로드 상태 확인
+    // 텍스트 초기화 (페이지 이동 시)
+    const box = document.getElementById('textBox');
+    box.innerHTML = "";
+
     mapData[mapName].objects.forEach(obj => {
         if(obj.img && !obj.imgObj) {
             obj.imgObj = new Image();
@@ -115,7 +118,9 @@ function loadMap(mapName) {
 loadMap("room");
 
 function typeText(text) {
-    let i = 0; const box = document.getElementById('textBox'); box.innerHTML = "";
+    let i = 0; 
+    const box = document.getElementById('textBox'); 
+    box.innerHTML = ""; // 가구 클릭 시 기존 멘트 삭제
     clearInterval(window.textInterval);
     window.textInterval = setInterval(() => {
         box.innerHTML += text[i++];
@@ -166,7 +171,6 @@ function handleInteraction(e) {
     if (nextY > bounds.maxY) nextY = bounds.maxY;
 
     let canMove = true;
-    // 맵 내의 모든 "이미지가 있는" 오브젝트는 충돌 판정 (뚫기 방지)
     mapData[currentMap].objects.forEach(obj => {
         if (obj.img !== "" && nextX > obj.x - 20 && nextX < obj.x + obj.w + 20 && nextY > obj.y - 20 && nextY < obj.y + obj.h + 20) {
             canMove = false;
@@ -178,6 +182,7 @@ function handleInteraction(e) {
         player.y = nextY;
     }
 
+    // 오브젝트를 클릭했을 때만 멘트 출력 (기존 멘트는 지워짐)
     if (targetObj) {
         typeText(messages[targetObj.name]);
     }
@@ -187,7 +192,6 @@ function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     if (backgroundImg.complete) ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height);
     
-    // 현재 맵의 모든 오브젝트 중 이미지가 있는 것들을 그림
     mapData[currentMap].objects.forEach(obj => {
         if (obj.imgObj && obj.imgObj.complete) {
             ctx.drawImage(obj.imgObj, obj.x, obj.y, obj.w, obj.h);
@@ -204,7 +208,6 @@ function draw() {
     requestAnimationFrame(draw);
 }
 
-// 모든 초기 이미지 로드 실행
 Object.values(mapData).forEach(map => {
     map.objects.forEach(obj => { if(obj.img) { obj.imgObj = new Image(); obj.imgObj.src = obj.img; } });
 });
