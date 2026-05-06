@@ -13,17 +13,15 @@
 </head>
 <body>
 <canvas id="game"></canvas>
-<div id="textBox">화면을 눌러 움직여서 가구에 가까이 가봐! 💗</div>
+<div id="textBox">가구 바로 옆으로 다가가봐! 💗</div>
 
 <script>
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 
-// 배경 세로 길이를 300에서 400으로 늘림
 canvas.width = 500;
 canvas.height = 400;
 
-// 이미지 설정
 const backgroundImg = new Image();
 backgroundImg.src = "https://i.imgur.com/bMfMr3n.png";
 
@@ -37,19 +35,18 @@ playerImages.right.src = "https://i.imgur.com/Kn58OH2.png";
 
 let player = {
     x: 250, y: 200,
-    size: 50,
-    step: 50, // 한 칸 이동 거리
+    size: 65, // 캐릭터 크기를 조금 더 키움
+    step: 50,
     direction: "front"
 };
 
-// 가구 배치 (띄엄띄엄 구석으로 배치)
 const objects = [
-    { name: 'tv', x: 20, y: 20, w: 80, h: 70, img: "https://i.imgur.com/x95Hwnw.png" }, // 좌측 상단
-    { name: 'kitchen', x: 200, y: 20, w: 110, h: 80, img: "https://i.imgur.com/86AUFui.png" }, // 중앙 상단
-    { name: 'bed', x: 380, y: 20, w: 100, h: 80, img: "https://i.imgur.com/gxjbbIY.png" }, // 우측 상단
-    { name: 'closet', x: 20, y: 280, w: 70, h: 90, img: "https://i.imgur.com/GMdqkYn.png" }, // 좌측 하단
-    { name: 'table', x: 200, y: 280, w: 90, h: 70, img: "https://i.imgur.com/EnAb1YP.png" }, // 중앙 하단
-    { name: 'bath', x: 390, y: 280, w: 80, h: 70, img: "https://i.imgur.com/viVc6C0.png" } // 우측 하단
+    { name: 'tv', x: 20, y: 20, w: 80, h: 70, img: "https://i.imgur.com/x95Hwnw.png" },
+    { name: 'kitchen', x: 200, y: 20, w: 110, h: 80, img: "https://i.imgur.com/86AUFui.png" },
+    { name: 'bed', x: 380, y: 20, w: 100, h: 80, img: "https://i.imgur.com/gxjbbIY.png" },
+    { name: 'closet', x: 20, y: 280, w: 70, h: 90, img: "https://i.imgur.com/GMdqkYn.png" },
+    { name: 'table', x: 200, y: 240, w: 90, h: 70, img: "https://i.imgur.com/EnAb1YP.png" },
+    { name: 'bath', x: 390, y: 280, w: 80, h: 70, img: "https://i.imgur.com/viVc6C0.png" }
 ];
 
 objects.forEach(obj => {
@@ -82,7 +79,6 @@ function typeText(text) {
     }, 30);
 }
 
-// 클릭 시 이동 (터치 인식용)
 canvas.addEventListener('click', (e) => {
     const rect = canvas.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
@@ -91,7 +87,6 @@ canvas.addEventListener('click', (e) => {
     let nextX = player.x;
     let nextY = player.y;
 
-    // 상하좌우 판단
     if (Math.abs(clickX - player.x) > Math.abs(clickY - player.y)) {
         if (clickX > player.x) { nextX += player.step; player.direction = "right"; }
         else { nextX -= player.step; player.direction = "left"; }
@@ -100,43 +95,60 @@ canvas.addEventListener('click', (e) => {
         else { nextY -= player.step; player.direction = "back"; }
     }
 
-    // 벽 뚫기 방지 (맵 경계 제한)
-    if (nextX >= 30 && nextX <= canvas.width - 30) player.x = nextX;
-    if (nextY >= 30 && nextY <= canvas.height - 30) player.y = nextY;
+    // 1. 벽 충돌 방지 (캔버스 경계)
+    if (nextX < 30 || nextX > canvas.width - 30 || nextY < 30 || nextY > canvas.height - 30) {
+        return; 
+    }
 
-    // 이동 후 가구 근처인지 확인
-    checkCollision();
-});
-
-// 가구 근처에 가면 대사 출력 (가까이 가면 자동 인식)
-function checkCollision() {
-    let nearObject = false;
+    // 2. 가구 충돌 방지 (가구 안으로 못 들어감)
+    let canMove = true;
     objects.forEach(obj => {
-        const dx = player.x - (obj.x + obj.w / 2);
-        const dy = player.y - (obj.y + obj.h / 2);
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        
-        if (dist < 80) { // 감지 거리 (적당히 가까이 가면 뜸)
-            typeText(messages[obj.name]);
-            nearObject = true;
+        // 캐릭터의 중심점이 가구의 사각형 영역 안에 들어가는지 확인
+        if (nextX > obj.x - 10 && nextX < obj.x + obj.w + 10 &&
+            nextY > obj.y - 10 && nextY < obj.y + obj.h + 10) {
+            canMove = false;
         }
     });
+
+    if (canMove) {
+        player.x = nextX;
+        player.y = nextY;
+    }
+
+    // 이동 후 대사 체크
+    checkProximity();
+});
+
+// 가구의 앞, 뒤, 옆에 딱 붙었을 때만 대사 출력
+function checkProximity() {
+    let triggered = false;
+    objects.forEach(obj => {
+        const dx = Math.abs(player.x - (obj.x + obj.w / 2));
+        const dy = Math.abs(player.y - (obj.y + obj.h / 2));
+
+        // 가구 크기에 비례해서 "가구 바로 주변"에 있는지 판정
+        if (dx < obj.w / 2 + 40 && dy < obj.h / 2 + 40) {
+            typeText(messages[obj.name]);
+            triggered = true;
+        }
+    });
+    
+    // 가구에서 멀어지면 대사창 가이드 문구로 복구 (선택 사항)
+    if(!triggered) {
+        // lastMessage = ""; // 필요 시 주석 해제하여 대사 초기화
+    }
 }
 
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // 배경 그리기 (늘어난 세로 길이에 맞춰서)
     ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height);
 
-    // 가구 그리기
     objects.forEach(obj => {
         if (obj.imgObj.complete) {
             ctx.drawImage(obj.imgObj, obj.x, obj.y, obj.w, obj.h);
         }
     });
 
-    // 캐릭터 그리기
     const img = playerImages[player.direction];
     if (img.complete) {
         ctx.drawImage(img, player.x - player.size / 2, player.y - player.size / 2, player.size, player.size);
