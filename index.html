@@ -35,9 +35,10 @@ playerImages.right.src = "https://i.imgur.com/Kn58OH2.png";
 
 let player = {
     x: 250, y: 200,
-    size: 65, // 캐릭터 크기를 조금 더 키움
+    size: 65, 
     step: 50,
-    direction: "front"
+    direction: "front",
+    name: "지수" // 이름 설정
 };
 
 const objects = [
@@ -95,15 +96,10 @@ canvas.addEventListener('click', (e) => {
         else { nextY -= player.step; player.direction = "back"; }
     }
 
-    // 1. 벽 충돌 방지 (캔버스 경계)
-    if (nextX < 30 || nextX > canvas.width - 30 || nextY < 30 || nextY > canvas.height - 30) {
-        return; 
-    }
+    if (nextX < 30 || nextX > canvas.width - 30 || nextY < 30 || nextY > canvas.height - 30) return; 
 
-    // 2. 가구 충돌 방지 (가구 안으로 못 들어감)
     let canMove = true;
     objects.forEach(obj => {
-        // 캐릭터의 중심점이 가구의 사각형 영역 안에 들어가는지 확인
         if (nextX > obj.x - 10 && nextX < obj.x + obj.w + 10 &&
             nextY > obj.y - 10 && nextY < obj.y + obj.h + 10) {
             canMove = false;
@@ -114,29 +110,35 @@ canvas.addEventListener('click', (e) => {
         player.x = nextX;
         player.y = nextY;
     }
-
-    // 이동 후 대사 체크
     checkProximity();
 });
 
-// 가구의 앞, 뒤, 옆에 딱 붙었을 때만 대사 출력
 function checkProximity() {
-    let triggered = false;
     objects.forEach(obj => {
         const dx = Math.abs(player.x - (obj.x + obj.w / 2));
         const dy = Math.abs(player.y - (obj.y + obj.h / 2));
-
-        // 가구 크기에 비례해서 "가구 바로 주변"에 있는지 판정
         if (dx < obj.w / 2 + 40 && dy < obj.h / 2 + 40) {
             typeText(messages[obj.name]);
-            triggered = true;
         }
     });
-    
-    // 가구에서 멀어지면 대사창 가이드 문구로 복구 (선택 사항)
-    if(!triggered) {
-        // lastMessage = ""; // 필요 시 주석 해제하여 대사 초기화
-    }
+}
+
+// 이름표 그리기 함수
+function drawNameTag() {
+    const tagW = 40;
+    const tagH = 20;
+    const tagX = player.x - tagW / 2;
+    const tagY = player.y - player.size / 2 - 25;
+
+    // 배경 상자 (반투명 블랙)
+    ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+    ctx.fillRect(tagX, tagY, tagW, tagH);
+
+    // 이름 텍스트
+    ctx.fillStyle = "white";
+    ctx.font = "14px 'DungGeunMo'";
+    ctx.textAlign = "center";
+    ctx.fillText(player.name, player.x, tagY + 15);
 }
 
 function draw() {
@@ -153,6 +155,9 @@ function draw() {
     if (img.complete) {
         ctx.drawImage(img, player.x - player.size / 2, player.y - player.size / 2, player.size, player.size);
     }
+    
+    drawNameTag(); // 캐릭터 위에 이름표 그리기
+    
     requestAnimationFrame(draw);
 }
 
