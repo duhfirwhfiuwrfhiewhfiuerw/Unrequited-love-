@@ -79,15 +79,14 @@ const mapData = {
     station: {
         bg: "https://i.imgur.com/GvvmB4e.jpeg",
         objects: [
-            // 벤치를 화면 맨 아래 바닥에 붙임
-            { name: 'bench', x: 150, y: 430, w: 160, h: 60, img: "https://i.imgur.com/LM0zkps.png" }, 
-            // 열차를 화면 맨 위 천장에 붙임
-            { name: 'train_body', x: 80, y: 10, w: 340, h: 200, img: "https://i.imgur.com/P0iVk3l.png" } 
+            // 벤치를 위쪽 승강장(사진상 왼쪽 중앙 구역)으로 이동
+            { name: 'bench', x: 50, y: 120, w: 180, h: 80, img: "https://i.imgur.com/LM0zkps.png" }, 
+            // 열차를 오른쪽 아래 넓은 구역으로 크게 이동
+            { name: 'train_body', x: 180, y: 280, w: 300, h: 200, img: "https://i.imgur.com/P0iVk3l.png" } 
         ],
-        // 열차 내부로 들어가는 문 위치 (열차 중간 투명창 위치)
-        door: { x: 260, y: 30, w: 120, h: 150, target: "srt_inside" },
-        // 지수의 활동 범위를 중간 넓은 구역으로 설정
-        bounds: { minX: 30, maxX: 470, minY: 220, maxY: 420 }
+        // 열차 입구 위치도 바뀐 열차 위치에 맞춰 아래로 조정
+        door: { x: 280, y: 320, w: 150, h: 120, target: "srt_inside" },
+        bounds: { minX: 20, maxX: 480, minY: 50, maxY: 480 }
     },
     srt_inside: {
         bg: "https://i.imgur.com/3N4o89c.png", 
@@ -138,22 +137,22 @@ function loadMap(mapName) {
     backgroundImg.src = mapData[mapName].bg;
 
     if(mapName === "station") {
-        player.x = 60; player.y = 350; // 역 진입 시 위치 (기차와 벤치 사이 중앙)
+        player.x = 80; player.y = 200; // 승강장 벤치 근처에서 시작
         addText("송정역에 도착했어! 벤치랑 열차를 클릭해봐 ✨");
     } else if(mapName === "room") {
         player.x = 400; player.y = 300;
     } else if(mapName === "srt_inside") {
         player.x = 250; player.y = 420;
-        addText("열차 안이야! 투명창을 잘 눌러서 들어왔구나?");
+        addText("열차 안이야! 기차 입구를 잘 찾아왔구나?");
     }
 }
 
-// 충돌 판정 범위를 0으로 만들어 이미지 자체에는 닿아도 안 막히게 수정
 function checkCollision(nx, ny) {
     const objects = mapData[currentMap].objects;
     for (let obj of objects) {
-        if (nx > obj.x && nx < obj.x + obj.w &&
-            ny > obj.y && ny < obj.y + obj.h) {
+        // 충돌을 거의 없애서 겹쳐서 이동 가능하도록 느슨하게 설정
+        if (nx > obj.x + 20 && nx < obj.x + obj.w - 20 &&
+            ny > obj.y + 20 && ny < obj.y + obj.h - 20) {
             return true;
         }
     }
