@@ -24,10 +24,10 @@
 <body>
 
 <canvas id="game"></canvas>
-<div id="textBox">지수의 방에 온걸 환영해! 가구를 클릭하면 지수가 이동하며 말을 할 거야 💗</div>
+<div id="textBox">지수의 방에 온걸 환영해! 가구를 클릭하면 지수가 이동하며 문구가 뜰거야 💗</div>
 
 <div class="music-player">
-    <div class="music-label">Now Playing: 동물의 숲 브금 🍃</div>
+    <div class="music-label">Now Playing: 동물의 숲 🍃</div>
     <iframe id="yt-player"
         src="https://www.youtube.com/embed/GYediWu_ixw?autoplay=1&loop=1&playlist=GYediWu_ixw&enablejsapi=1" 
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
@@ -51,15 +51,21 @@ const mapData = {
             { name: 'table', x: 200, y: 350, w: 100, h: 80, img: "https://i.imgur.com/EnAb1YP.png" },
             { name: 'bath', x: 380, y: 340, w: 90, h: 90, img: "https://i.imgur.com/viVc6C0.png" }
         ],
-        door: { x: 460, y: 200, w: 40, h: 100 }
+        door: { x: 460, y: 200, w: 40, h: 100, target: "station" }
     },
-    garden: {
-        bg: "https://i.imgur.com/vHInE3r.png",
+    station: {
+        bg: "https://i.imgur.com/utK3QUS.png", // 제공해주신 기차역 이미지로 교체됨
         objects: [
-            { name: 'tree', x: 80, y: 130, w: 120, h: 150, img: "https://i.imgur.com/hV8fGIm.png" },
-            { name: 'mailbox', x: 400, y: 350, w: 50, h: 70, img: "https://i.imgur.com/5yPq2uO.png" }
+            { name: 'bench', x: 320, y: 440, w: 130, h: 180, img: "" }, // 투명 클릭 영역 (의자)
+            { name: 'train_body', x: 500, y: 230, w: 250, h: 500, img: "" } // 투명 클릭 영역 (열차 몸체)
         ],
-        door: { x: 0, y: 200, w: 40, h: 100 }
+        // 열차 내부로 들어가는 투명 입구 영역 (좌표는 이미지에 맞춰 조정 가능)
+        door: { x: 650, y: 450, w: 80, h: 120, target: "srt_inside" } 
+    },
+    srt_inside: {
+        bg: "https://via.placeholder.com/500x500.png?text=SRT+Inside", // 다음 페이지 배경
+        objects: [],
+        door: { x: 0, y: 200, w: 40, h: 100, target: "station" }
     }
 };
 
@@ -79,15 +85,24 @@ const messages = {
     bath: "여긴 내가 화장하는 곳이야 따로 화장대가 없어서 여기서 자주 치장해. 얼른 준비해야지!",
     closet: "이건 옷장이야. 중요한 날에는 무슨옷을 입어야 잘보일지 고민을 많이해서 지각한적이 있어",
     kitchen: "오빠한테 도시락을 만들어줘야해 하지만 한번에 성공한적이 없어",
-    tree: "정말 커다란 나무야. 그늘이 시원해.",
-    mailbox: "편지가 왔나 확인해볼까?"
+    // 기차역 문구 추가
+    bench: " 조금 일찍 도착했으니까 여기서 열차를 기다릴수 있어 ",
+    train_body: " 내가 타야하는 열차야! 일찍 도착했으니까 빨리타서 안에서 기다리자. 열차에 투명부분을 눌러봐! "
 };
 
 function loadMap(mapName) {
     currentMap = mapName;
     backgroundImg.src = mapData[mapName].bg;
-    mapData[mapName].objects.forEach(obj => { obj.imgObj = new Image(); obj.imgObj.src = obj.img; });
-    player.x = (mapName === "garden") ? 80 : 420;
+    mapData[mapName].objects.forEach(obj => { 
+        if(obj.img) {
+            obj.imgObj = new Image(); 
+            obj.imgObj.src = obj.img; 
+        }
+    });
+    // 시작 위치 조정
+    if(mapName === "station") player.x = 100;
+    else if(mapName === "room") player.x = 420;
+    else player.x = 250;
 }
 loadMap("room");
 
@@ -100,7 +115,6 @@ function typeText(text) {
     }, 30);
 }
 
-// 📱 모바일 터치 및 마우스 통합 핸들러
 canvas.addEventListener('mousedown', (e) => handleInteraction(e));
 canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleInteraction(e.touches[0]); }, {passive: false});
 
@@ -111,14 +125,14 @@ function handleInteraction(e) {
     const clickX = (e.clientX - rect.left) * scaleX;
     const clickY = (e.clientY - rect.top) * scaleY;
 
-    // 1. 문 클릭 시 맵 이동
+    // 1. 문(포탈) 클릭 시 맵 이동
     const door = mapData[currentMap].door;
     if (clickX > door.x && clickX < door.x + door.w && clickY > door.y && clickY < door.y + door.h) {
-        loadMap(currentMap === "room" ? "garden" : "room");
+        loadMap(door.target);
         return;
     }
 
-    // 2. 가구 클릭 여부 감지
+    // 2. 오브젝트 클릭 감지
     let targetObj = null;
     mapData[currentMap].objects.forEach(obj => {
         if (clickX > obj.x && clickX < obj.x + obj.w && clickY > obj.y && clickY < obj.y + obj.h) {
@@ -126,13 +140,12 @@ function handleInteraction(e) {
         }
     });
 
-    // 3. 이동 및 방향 설정 (클릭한 위치 기준으로 상하좌우 판단)
+    // 3. 이동 및 방향 설정
     let nextX = player.x;
     let nextY = player.y;
     const diffX = clickX - player.x;
     const diffY = clickY - player.y;
 
-    // X축 거리가 더 멀면 좌우 이동, Y축이 멀면 상하 이동
     if (Math.abs(diffX) > Math.abs(diffY)) {
         if (diffX > 0) { nextX += player.step; player.direction = "right"; }
         else { nextX -= player.step; player.direction = "left"; }
@@ -141,20 +154,13 @@ function handleInteraction(e) {
         else { nextY -= player.step; player.direction = "back"; }
     }
 
-    // 4. 경계 및 충돌 체크
+    // 경계 제한
     if (nextX < 40) nextX = 40; if (nextX > 460) nextX = 460;
     if (nextY < 150) nextY = 150; if (nextY > 450) nextY = 450;
 
-    let canMove = true;
-    mapData[currentMap].objects.forEach(obj => {
-        if (nextX > obj.x - 10 && nextX < obj.x + obj.w + 10 && nextY > obj.y - 10 && nextY < obj.y + obj.h + 10) {
-            canMove = false;
-        }
-    });
+    player.x = nextX; player.y = nextY;
 
-    if (canMove) { player.x = nextX; player.y = nextY; }
-
-    // 5. 가구를 클릭했을 때만 대사 출력
+    // 4. 문구 출력
     if (targetObj) {
         typeText(messages[targetObj.name]);
     }
@@ -163,9 +169,11 @@ function handleInteraction(e) {
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height);
+    
     mapData[currentMap].objects.forEach(obj => {
         if (obj.imgObj && obj.imgObj.complete) ctx.drawImage(obj.imgObj, obj.x, obj.y, obj.w, obj.h);
     });
+
     const img = playerImages[player.direction];
     if (img.complete) ctx.drawImage(img, player.x - player.size / 2, player.y - player.size / 2, player.size, player.size);
     
