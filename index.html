@@ -8,15 +8,25 @@
     <style>
         body { margin: 0; background: #fff3f6; font-family: 'DungGeunMo', monospace; display: flex; flex-direction: column; align-items: center; padding: 10px 0; touch-action: manipulation; overflow-x: hidden; }
         canvas { width: 95%; max-width: 500px; background: #fdf6f0; border: 3px solid #e8cfcf; image-rendering: pixelated; border-radius: 10px; cursor: pointer; display: block; }
+        
         #textBox {
             width: 95%; max-width: 500px; height: 130px; margin-top: 15px; padding: 15px;
             background: linear-gradient(135deg, #ffffff 0%, #fff5f7 100%);
             border: 4px solid #e8cfcf; box-shadow: inset 0 0 0 2px #ffffff, 5px 5px 0px rgba(232, 207, 207, 0.5);
             border-radius: 15px; box-sizing: border-box; line-height: 1.6; color: #5a4f4f; font-size: 15px; 
             overflow-y: auto; word-break: keep-all; position: relative;
+            scrollbar-width: thin; scrollbar-color: #ffb6c1 transparent;
+            scroll-behavior: smooth;
         }
+        
+        #textBox::-webkit-scrollbar { width: 6px; }
+        #textBox::-webkit-scrollbar-thumb { background-color: #ffb6c1; border-radius: 10px; }
+
         .msg-entry { margin-bottom: 10px; border-bottom: 1px dashed #ffe0e5; padding-bottom: 6px; }
+        .msg-entry:last-child { border-bottom: none; }
+
         .music-player { margin-top: 10px; width: 95%; max-width: 500px; text-align: center; }
+        .music-label { font-size: 12px; color: #e8cfcf; margin-bottom: 5px; }
         #yt-player { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
     </style>
 </head>
@@ -26,7 +36,11 @@
 <div id="textBox"></div>
 
 <div class="music-player">
-    <iframe id="yt-player" src="https://www.youtube.com/embed/GYediWu_ixw?autoplay=1&loop=1&playlist=GYediWu_ixw&enablejsapi=1" allow="autoplay"></iframe>
+    <div class="music-label">Now Playing: 동물의 숲 브금 🍃</div>
+    <iframe id="yt-player"
+        src="https://www.youtube.com/embed/GYediWu_ixw?autoplay=1&loop=1&playlist=GYediWu_ixw&enablejsapi=1" 
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
+    </iframe>
 </div>
 
 <script>
@@ -37,9 +51,15 @@ canvas.width = 500; canvas.height = 500;
 let currentMap = "room";
 
 const messages = {
-    welcome: "지수의 방에 온걸 환영해! 가구를 클릭해봐 💗",
-    bench: "벤치를 아주 크게 만들었어! 이제 잘 보이지?",
-    train_body: "열차를 오른쪽 아래로 옮겼어. 클릭해서 안으로 들어가봐!"
+    welcome: "지수의 방에 온걸 환영해! 가구를 클릭하면 지수가 이동하며 말을 할 거야 💗",
+    tv: "어렸을때 티비를 자주봤어. 만화 위주로 봤었던 것같은데 요즘은 잘 안봐",
+    bed: "중요한 날이니까 일찍 일어나야해! 알람맞춰놓고 열차시간 맞춰서 일어났어",
+    table: "화장 다 하고 버스기다릴때 앉아있어야지 오빠한테 카톡보내놔야겠다",
+    bath: "여긴 내가 화장하는 곳이야 따로 화장대가 없어서 여기서 자주 치장해. 얼른 준비해야지!",
+    closet: "이건 옷장이야. 중요한 날에는 무슨옷을 입어야 잘보일지 고민을 많이해서 지각한적이 있어",
+    kitchen: "오빠한테 도시락을 만들어줘야해 하지만 한번에 성공한적이 없어",
+    bench: "조금 일찍 도착했으니까 여기서 열차를 기다릴수 있어",
+    train_body: "내가 타야하는 열차야! 일찍 도착했으니까 빨리타서 안에서 기다리자. 열차에 투명부분을 눌러봐!"
 };
 
 const mapData = {
@@ -59,13 +79,14 @@ const mapData = {
     station: {
         bg: "https://i.imgur.com/GvvmB4e.jpeg",
         objects: [
-            // 벤치: 중앙 배치, 크기 가로 200으로 대폭 확대
-            { name: 'bench', x: 150, y: 150, w: 200, h: 100, img: "https://i.imgur.com/LM0zkps.png" }, 
-            // 열차: 오른쪽 아래 배치, 크기 300으로 확대
-            { name: 'train_body', x: 200, y: 280, w: 300, h: 200, img: "https://i.imgur.com/P0iVk3l.png" } 
+            // 벤치를 아래쪽으로 더 내림 (y: 350 -> 390)
+            { name: 'bench', x: 140, y: 390, w: 160, h: 90, img: "https://i.imgur.com/LM0zkps.png" }, 
+            // 열차를 위쪽으로 더 올림 (y: 200 -> 140)
+            { name: 'train_body', x: 120, y: 140, w: 320, h: 220, img: "https://i.imgur.com/P0iVk3l.png" } 
         ],
-        door: { x: 250, y: 320, w: 200, h: 150, target: "srt_inside" },
-        bounds: { minX: 20, maxX: 480, minY: 50, maxY: 480 }
+        // 입구 위치도 열차 위치에 맞춰 조정
+        door: { x: 300, y: 160, w: 120, h: 100, target: "srt_inside" },
+        bounds: { minX: 30, maxX: 470, minY: 300, maxY: 470 }
     },
     srt_inside: {
         bg: "https://i.imgur.com/3N4o89c.png", 
@@ -98,20 +119,44 @@ function addText(text) {
     const box = document.getElementById('textBox');
     const newMsg = document.createElement('div');
     newMsg.className = 'msg-entry';
-    newMsg.innerHTML = text;
     box.appendChild(newMsg);
-    box.scrollTop = box.scrollHeight;
+
+    let i = 0;
+    const interval = setInterval(() => {
+        if (i < text.length) {
+            newMsg.innerHTML += text[i++];
+            box.scrollTop = box.scrollHeight;
+        } else {
+            clearInterval(interval);
+        }
+    }, 25);
 }
 
 function loadMap(mapName) {
     currentMap = mapName;
     backgroundImg.src = mapData[mapName].bg;
+
     if(mapName === "station") {
-        player.x = 80; player.y = 400; // 왼쪽 아래 승강장에서 시작
-        addText("송정역이야! 중앙의 큰 벤치와 오른쪽 아래 열차를 봐!");
+        player.x = 60; player.y = 440; // 역 진입 시 위치 조정
+        addText("송정역에 도착했어! 벤치랑 열차를 클릭해봐 ✨");
     } else if(mapName === "room") {
         player.x = 400; player.y = 300;
+    } else if(mapName === "srt_inside") {
+        player.x = 250; player.y = 420;
+        addText("열차 안이야! 투명창을 잘 눌러서 들어왔구나?");
     }
+}
+
+function checkCollision(nx, ny) {
+    const objects = mapData[currentMap].objects;
+    for (let obj of objects) {
+        // 충돌 판정 여유를 15로 줄여서 더 부드럽게 통과하게 함
+        if (nx > obj.x - 15 && nx < obj.x + obj.w + 15 &&
+            ny > obj.y - 10 && ny < obj.y + obj.h + 10) {
+            return true;
+        }
+    }
+    return false;
 }
 
 function handleInteraction(e) {
@@ -120,6 +165,7 @@ function handleInteraction(e) {
     const scaleY = canvas.height / rect.height;
     const clientX = e.clientX || (e.touches && e.touches[0].clientX);
     const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+    
     const clickX = (clientX - rect.left) * scaleX;
     const clickY = (clientY - rect.top) * scaleY;
 
@@ -138,19 +184,28 @@ function handleInteraction(e) {
 
     const diffX = clickX - player.x;
     const diffY = clickY - player.y;
+    let nextX = player.x;
+    let nextY = player.y;
+
     if (Math.abs(diffX) > Math.abs(diffY)) {
-        player.x += (diffX > 0) ? player.step : -player.step;
-        player.direction = (diffX > 0) ? "right" : "left";
+        if (diffX > 0) { nextX += player.step; player.direction = "right"; }
+        else { nextX -= player.step; player.direction = "left"; }
     } else {
-        player.y += (diffY > 0) ? player.step : -player.step;
-        player.direction = (diffY > 0) ? "front" : "back";
+        if (diffY > 0) { nextY += player.step; player.direction = "front"; }
+        else { nextY -= player.step; player.direction = "back"; }
     }
 
     const bounds = mapData[currentMap].bounds;
-    player.x = Math.max(bounds.minX, Math.min(bounds.maxX, player.x));
-    player.y = Math.max(bounds.minY, Math.min(bounds.maxY, player.y));
+    if (nextX >= bounds.minX && nextX <= bounds.maxX && 
+        nextY >= bounds.minY && nextY <= bounds.maxY &&
+        !checkCollision(nextX, nextY)) {
+        player.x = nextX;
+        player.y = nextY;
+    }
 
-    if (targetObj) addText(messages[targetObj.name]);
+    if (targetObj) {
+        addText(messages[targetObj.name]);
+    }
 }
 
 canvas.addEventListener('mousedown', handleInteraction);
@@ -159,11 +214,17 @@ canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleInterac
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     if (backgroundImg.complete) ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height);
+    
     mapData[currentMap].objects.forEach(obj => {
-        if (obj.imgObj && obj.imgObj.complete) ctx.drawImage(obj.imgObj, obj.x, obj.y, obj.w, obj.h);
+        if (obj.imgObj && obj.imgObj.complete) {
+            ctx.drawImage(obj.imgObj, obj.x, obj.y, obj.w, obj.h);
+        }
     });
+
     const pImg = playerImages[player.direction];
-    if (pImg.complete) ctx.drawImage(pImg, player.x - player.size / 2, player.y - player.size / 2, player.size, player.size);
+    if (pImg.complete) {
+        ctx.drawImage(pImg, player.x - player.size / 2, player.y - player.size / 2, player.size, player.size);
+    }
     
     ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
     ctx.fillRect(player.x - 25, player.y - 45, 50, 18);
@@ -171,11 +232,15 @@ function draw() {
     ctx.font = "14px 'DungGeunMo'";
     ctx.textAlign = "center";
     ctx.fillText(player.name, player.x, player.y - 31);
+
     requestAnimationFrame(draw);
 }
 
-backgroundImg.onload = draw;
-window.onload = () => { backgroundImg.src = mapData["room"].bg; addText(messages.welcome); };
+window.onload = function() {
+    backgroundImg.src = mapData["room"].bg;
+    addText(messages.welcome);
+    draw();
+};
 </script>
 </body>
 </html>
