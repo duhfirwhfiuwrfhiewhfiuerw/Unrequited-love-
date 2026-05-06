@@ -79,14 +79,15 @@ const mapData = {
     station: {
         bg: "https://i.imgur.com/GvvmB4e.jpeg",
         objects: [
-            // 벤치를 맨 아래로 더 내림 (y: 390 -> 410)
-            { name: 'bench', x: 140, y: 410, w: 160, h: 80, img: "https://i.imgur.com/LM0zkps.png" }, 
-            // 열차를 맨 위로 더 올림 (y: 140 -> 60)
-            { name: 'train_body', x: 100, y: 60, w: 320, h: 220, img: "https://i.imgur.com/P0iVk3l.png" } 
+            // 벤치를 화면 맨 아래 바닥에 붙임
+            { name: 'bench', x: 150, y: 430, w: 160, h: 60, img: "https://i.imgur.com/LM0zkps.png" }, 
+            // 열차를 화면 맨 위 천장에 붙임
+            { name: 'train_body', x: 80, y: 10, w: 340, h: 200, img: "https://i.imgur.com/P0iVk3l.png" } 
         ],
-        // 입구 위치 조정 (열차의 중간 투명창 부근)
-        door: { x: 280, y: 100, w: 100, h: 120, target: "srt_inside" },
-        bounds: { minX: 30, maxX: 470, minY: 280, maxY: 480 }
+        // 열차 내부로 들어가는 문 위치 (열차 중간 투명창 위치)
+        door: { x: 260, y: 30, w: 120, h: 150, target: "srt_inside" },
+        // 지수의 활동 범위를 중간 넓은 구역으로 설정
+        bounds: { minX: 30, maxX: 470, minY: 220, maxY: 420 }
     },
     srt_inside: {
         bg: "https://i.imgur.com/3N4o89c.png", 
@@ -137,7 +138,7 @@ function loadMap(mapName) {
     backgroundImg.src = mapData[mapName].bg;
 
     if(mapName === "station") {
-        player.x = 60; player.y = 440;
+        player.x = 60; player.y = 350; // 역 진입 시 위치 (기차와 벤치 사이 중앙)
         addText("송정역에 도착했어! 벤치랑 열차를 클릭해봐 ✨");
     } else if(mapName === "room") {
         player.x = 400; player.y = 300;
@@ -147,12 +148,12 @@ function loadMap(mapName) {
     }
 }
 
+// 충돌 판정 범위를 0으로 만들어 이미지 자체에는 닿아도 안 막히게 수정
 function checkCollision(nx, ny) {
     const objects = mapData[currentMap].objects;
     for (let obj of objects) {
-        // 충돌 여유 공간을 5로 최소화하여 거의 닿기 직전까지 이동 가능하게 수정
-        if (nx > obj.x + 10 && nx < obj.x + obj.w - 10 &&
-            ny > obj.y + 10 && ny < obj.y + obj.h - 10) {
+        if (nx > obj.x && nx < obj.x + obj.w &&
+            ny > obj.y && ny < obj.y + obj.h) {
             return true;
         }
     }
