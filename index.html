@@ -8,19 +8,14 @@
     <style>
         body { margin: 0; background: #fff3f6; font-family: 'DungGeunMo', monospace; display: flex; flex-direction: column; align-items: center; padding: 10px 0; touch-action: manipulation; overflow-x: hidden; }
         canvas { width: 95%; max-width: 500px; background: #fdf6f0; border: 3px solid #e8cfcf; image-rendering: pixelated; border-radius: 10px; cursor: pointer; display: block; }
-
-        /* ✨ 텍스트박스 디자인 */
         #textBox {
-            width: 95%; max-width: 500px; min-height: 110px; margin-top: 15px; padding: 18px;
+            width: 95%; max-width: 500px; min-height: 130px; margin-top: 15px; padding: 22px;
             background: linear-gradient(135deg, #ffffff 0%, #fff5f7 100%);
             border: 4px solid #e8cfcf; box-shadow: inset 0 0 0 2px #ffffff, 5px 5px 0px rgba(232, 207, 207, 0.5);
-            border-radius: 15px; box-sizing: border-box; line-height: 1.6; color: #5a4f4f; font-size: 15px; position: relative; word-break: keep-all;
+            border-radius: 15px; box-sizing: border-box; line-height: 1.8; color: #5a4f4f; font-size: 16px; position: relative; word-break: keep-all;
         }
-
-        #textBox::after { content: ' ▼'; position: absolute; bottom: 10px; right: 15px; color: #ffb6c1; font-size: 12px; animation: blink 0.8s infinite; }
+        #textBox::after { content: ' ▼'; position: absolute; bottom: 15px; right: 20px; color: #ffb6c1; font-size: 14px; animation: blink 0.8s infinite; }
         @keyframes blink { 0%, 100% { opacity: 1; transform: translateY(0); } 50% { opacity: 0.3; transform: translateY(2px); } }
-
-        /* 🎵 유튜브 브금 (숨김 처리) */
         .music-player { margin-top: 10px; width: 95%; max-width: 500px; text-align: center; }
         .music-label { font-size: 12px; color: #e8cfcf; margin-bottom: 5px; }
         #yt-player { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
@@ -29,7 +24,7 @@
 <body>
 
 <canvas id="game"></canvas>
-<div id="textBox">지수의 방에 온걸 환영해! 캐릭터를 움직여봐 💗</div>
+<div id="textBox">지수의 방에 온걸 환영해! 가구를 터치하면 지수가 그 앞으로 가서 말을 걸어줄 거야 💗</div>
 
 <div class="music-player">
     <div class="music-label">Now Playing: 동물의 숲 브금 🍃</div>
@@ -42,43 +37,40 @@
 <script>
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
-
-canvas.width = 500;
-canvas.height = 500;
+canvas.width = 500; canvas.height = 500;
 
 let currentMap = "room";
-
 const mapData = {
     room: {
         bg: "https://i.imgur.com/bMfMr3n.png",
         objects: [
-            { name: 'closet', label: '옷장', x: 30, y: 100, w: 80, h: 100, img: "https://i.imgur.com/GMdqkYn.png" }, 
-            { name: 'bed', label: '침대', x: 190, y: 100, w: 120, h: 90, img: "https://i.imgur.com/gxjbbIY.png" },
-            { name: 'tv', label: 'TV', x: 380, y: 100, w: 90, h: 80, img: "https://i.imgur.com/x95Hwnw.png" },
-            { name: 'kitchen', label: '부엌', x: 30, y: 340, w: 120, h: 90, img: "https://i.imgur.com/86AUFui.png" },
-            { name: 'table', label: '테이블', x: 200, y: 350, w: 100, h: 80, img: "https://i.imgur.com/EnAb1YP.png" },
-            { name: 'bath', label: '욕실', x: 380, y: 340, w: 90, h: 90, img: "https://i.imgur.com/viVc6C0.png" }
+            { name: 'closet', label: '옷장', x: 30, y: 80, w: 90, h: 120, img: "https://i.imgur.com/GMdqkYn.png" }, 
+            { name: 'bed', label: '침대', x: 190, y: 80, w: 120, h: 100, img: "https://i.imgur.com/gxjbbIY.png" },
+            { name: 'tv', label: 'TV', x: 380, y: 80, w: 90, h: 90, img: "https://i.imgur.com/x95Hwnw.png" },
+            { name: 'kitchen', label: '부엌', x: 30, y: 320, w: 120, h: 110, img: "https://i.imgur.com/86AUFui.png" },
+            { name: 'table', label: '테이블', x: 200, y: 330, w: 100, h: 90, img: "https://i.imgur.com/EnAb1YP.png" },
+            { name: 'bath', label: '욕실', x: 380, y: 320, w: 90, h: 110, img: "https://i.imgur.com/viVc6C0.png" }
         ],
-        door: { x: 460, y: 200, w: 40, h: 100 } // 오른쪽 문 영역
+        door: { x: 450, y: 200, w: 50, h: 100 }
     },
     garden: {
         bg: "https://i.imgur.com/vHInE3r.png",
         objects: [
-            { name: 'tree', label: '나무', x: 80, y: 130, w: 120, h: 150, img: "https://i.imgur.com/hV8fGIm.png" },
-            { name: 'mailbox', label: '우체통', x: 400, y: 350, w: 50, h: 70, img: "https://i.imgur.com/5yPq2uO.png" }
+            { name: 'tree', label: '나무', x: 80, y: 110, w: 130, h: 170, img: "https://i.imgur.com/hV8fGIm.png" },
+            { name: 'mailbox', label: '우체통', x: 400, y: 340, w: 60, h: 80, img: "https://i.imgur.com/5yPq2uO.png" }
         ],
-        door: { x: 0, y: 200, w: 40, h: 100 } // 왼쪽으로 나가는 문
+        door: { x: 0, y: 200, w: 50, h: 100 }
     }
 };
 
-const backgroundImg = new Image();
 const playerImages = { front: new Image(), back: new Image(), left: new Image(), right: new Image() };
 playerImages.front.src = "https://i.imgur.com/l1ENJqo.png";
 playerImages.back.src = "https://i.imgur.com/nbzUAfX.png";
 playerImages.left.src = "https://i.imgur.com/ginoxYa.png";
 playerImages.right.src = "https://i.imgur.com/Kn58OH2.png";
 
-let player = { x: 250, y: 300, size: 55, step: 50, direction: "front", name: "지수" };
+const backgroundImg = new Image();
+let player = { x: 250, y: 280, size: 55, direction: "front", name: "지수" };
 
 const messages = {
     tv: "어렸을때 티비를 자주봤어. 만화 위주로 봤었던 것같은데 요즘은 잘 안봐",
@@ -94,128 +86,85 @@ const messages = {
 function loadMap(mapName) {
     currentMap = mapName;
     backgroundImg.src = mapData[mapName].bg;
-    mapData[mapName].objects.forEach(obj => {
-        obj.imgObj = new Image();
-        obj.imgObj.src = obj.img;
-    });
-    player.x = (mapName === "garden") ? 80 : 420;
-    typeText(mapName === "garden" ? "정원으로 나왔어! 공기가 좋다." : "방으로 돌아왔어.");
+    mapData[mapName].objects.forEach(obj => { obj.imgObj = new Image(); obj.imgObj.src = obj.img; });
+    player.x = (mapName === "garden") ? 80 : 400;
 }
-
 loadMap("room");
 
-let lastMessage = "";
 function typeText(text) {
-    if (lastMessage === text) return;
-    lastMessage = text;
-    let i = 0;
-    const box = document.getElementById('textBox');
-    box.innerHTML = "";
+    let i = 0; const box = document.getElementById('textBox'); box.innerHTML = "";
     clearInterval(window.textInterval);
     window.textInterval = setInterval(() => {
-        box.innerHTML += text[i];
-        i++;
+        box.innerHTML += text[i++];
         if (i >= text.length) clearInterval(window.textInterval);
     }, 30);
 }
 
-canvas.addEventListener('mousedown', handleInteraction);
-canvas.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    handleInteraction(e.touches[0]);
-});
+canvas.addEventListener('mousedown', (e) => handleAction(e));
+canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleAction(e.touches[0]); }, {passive: false});
 
-function handleInteraction(e) {
+function handleAction(e) {
     const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    const clickX = (e.clientX - rect.left) * scaleX;
-    const clickY = (e.clientY - rect.top) * scaleY;
+    const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+    const y = (e.clientY - rect.top) * (canvas.height / rect.height);
 
-    // 🚪 문 터치 체크 (이동은 무조건 문을 터치해야 함)
     const door = mapData[currentMap].door;
-    if (clickX > door.x && clickX < door.x + door.w && clickY > door.y && clickY < door.y + door.h) {
+    if (x > door.x && x < door.x + door.w && y > door.y && y < door.y + door.h) {
         loadMap(currentMap === "room" ? "garden" : "room");
         return;
     }
 
-    let nextX = player.x;
-    let nextY = player.y;
-
-    // 모바일 조작 개선: 클릭한 방향으로 확실히 이동
-    const diffX = clickX - player.x;
-    const diffY = clickY - player.y;
-
-    if (Math.abs(diffX) > Math.abs(diffY)) {
-        if (diffX > 0) { nextX += player.step; player.direction = "right"; }
-        else { nextX -= player.step; player.direction = "left"; }
-    } else {
-        if (diffY > 0) { nextY += player.step; player.direction = "front"; }
-        else { nextY -= player.step; player.direction = "back"; }
-    }
-
-    // 벽 통과 방지 (맵 경계)
-    if (nextX < 40) nextX = 40;
-    if (nextX > 460) nextX = 460;
-    if (nextY < 150) nextY = 150;
-    if (nextY > 450) nextY = 450;
-
-    // 가구 충돌 체크 (뚫지 못하게 정확히 멈춤)
-    let canMove = true;
-    mapData[currentMap].objects.forEach(obj => {
-        const padding = 15;
-        if (nextX > obj.x - padding && nextX < obj.x + obj.w + padding &&
-            nextY > obj.y - padding && nextY < obj.y + obj.h + padding) {
-            canMove = false;
+    for (let obj of mapData[currentMap].objects) {
+        if (x > obj.x && x < obj.x + obj.w && y > obj.y && y < obj.y + obj.h) {
+            goToObject(obj);
+            return;
         }
-    });
-
-    if (canMove) {
-        player.x = nextX;
-        player.y = nextY;
     }
-    checkProximity();
+    
+    // 빈 바닥 클릭 시 해당 위치로 이동
+    player.x = Math.max(50, Math.min(450, x));
+    player.y = Math.max(180, Math.min(450, y));
 }
 
-function checkProximity() {
-    mapData[currentMap].objects.forEach(obj => {
-        const dx = player.x - (obj.x + obj.w / 2);
-        const dy = player.y - (obj.y + obj.h / 2);
-        const range = 80; // 모바일 배려하여 감지 범위 소폭 상향
+function goToObject(obj) {
+    const objCenterX = obj.x + obj.w / 2;
+    const objCenterY = obj.y + obj.h / 2;
+    
+    let targetX = player.x;
+    let targetY = player.y;
+    let newDir = "front";
 
-        let isFacing = false;
-        if (player.direction === "right" && dx < 0 && Math.abs(dx) < range && Math.abs(dy) < obj.h) isFacing = true;
-        if (player.direction === "left" && dx > 0 && Math.abs(dx) < range && Math.abs(dy) < obj.h) isFacing = true;
-        if (player.direction === "front" && dy < 0 && Math.abs(dy) < range && Math.abs(dx) < obj.w) isFacing = true;
-        if (player.direction === "back" && dy > 0 && Math.abs(dy) < range && Math.abs(dx) < obj.w) isFacing = true;
+    // 가구의 위치에 따라 캐릭터가 서야 할 가장 가까운 좌표 계산
+    if (player.y < obj.y) { // 가구보다 위일 때 -> 가구 위쪽에 서서 아래 보기
+        targetX = objCenterX; targetY = obj.y - 40; newDir = "front";
+    } else if (player.y > obj.y + obj.h) { // 가구보다 아래일 때 -> 가구 아래쪽에 서서 위 보기
+        targetX = objCenterX; targetY = obj.y + obj.h + 40; newDir = "back";
+    } else if (player.x < obj.x) { // 가구보다 왼쪽일 때 -> 왼쪽 서서 오른쪽 보기
+        targetX = obj.x - 40; targetY = objCenterY; newDir = "right";
+    } else { // 가구보다 오른쪽일 때 -> 오른쪽 서서 왼쪽 보기
+        targetX = obj.x + obj.w + 40; targetY = objCenterY; newDir = "left";
+    }
 
-        if (isFacing) typeText(messages[obj.name]);
-    });
+    // 이동 및 방향 설정
+    player.x = Math.max(50, Math.min(450, targetX));
+    player.y = Math.max(180, Math.min(450, targetY));
+    player.direction = newDir;
+
+    // 대사 출력
+    typeText(messages[obj.name]);
 }
 
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height);
-    
-    mapData[currentMap].objects.forEach(obj => {
-        if (obj.imgObj && obj.imgObj.complete) {
-            ctx.drawImage(obj.imgObj, obj.x, obj.y, obj.w, obj.h);
-        }
-    });
-
+    mapData[currentMap].objects.forEach(obj => { if (obj.imgObj && obj.imgObj.complete) ctx.drawImage(obj.imgObj, obj.x, obj.y, obj.w, obj.h); });
     const img = playerImages[player.direction];
-    if (img.complete) {
-        ctx.drawImage(img, player.x - player.size / 2, player.y - player.size / 2, player.size, player.size);
-    }
-
-    // 이름표
-    ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
-    ctx.fillRect(player.x - 20, player.y - 45, 40, 20);
-    ctx.fillStyle = "white";
-    ctx.font = "14px 'DungGeunMo'";
-    ctx.textAlign = "center";
-    ctx.fillText(player.name, player.x, player.y - 30);
-
+    if (img.complete) ctx.drawImage(img, player.x - player.size / 2, player.y - player.size / 2, player.size, player.size);
+    
+    // 네임택
+    ctx.fillStyle = "rgba(0, 0, 0, 0.4)"; ctx.fillRect(player.x - 25, player.y - 45, 50, 20);
+    ctx.fillStyle = "white"; ctx.font = "14px 'DungGeunMo'"; ctx.textAlign = "center"; ctx.fillText(player.name, player.x, player.y - 30);
+    
     requestAnimationFrame(draw);
 }
 draw();
