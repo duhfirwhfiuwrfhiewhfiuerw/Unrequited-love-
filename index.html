@@ -6,47 +6,51 @@
     <title>지수 일기</title>
     <link href="https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2107@1.1/DungGeunMo.css" rel="stylesheet">
     <style>
-        body { margin: 0; background: #fff3f6; font-family: 'DungGeunMo', monospace; display: flex; flex-direction: column; align-items: center; }
-        canvas { width: 100%; max-width: 500px; background: #fdf6f0; border: 3px solid #e8cfcf; image-rendering: pixelated; }
-       /* 기존 스타일 시트의 #textBox 부분을 아래로 교체 */
-#textBox {
-    width: 95%;
-    max-width: 500px;
-    min-height: 130px;
-    margin-top: 15px;
-    padding: 20px;
-    
-    /* 배경 디자인: 부드러운 화이트-핑크 그라데이션 */
-    background: linear-gradient(135deg, #ffffff 0%, #fff0f5 100%);
-    
-    /* 테두리: 픽셀 느낌을 주는 이중 테두리 */
-    border: 4px solid #e8cfcf;
-    outline: 2px solid #ffffff;
-    outline-offset: -6px;
-    border-radius: 10px;
-    
-    /* 그림자: 입체감을 주는 효과 */
-    box-shadow: 5px 5px 0px rgba(232, 207, 207, 0.5);
-    
-    box-sizing: border-box;
-    line-height: 1.8;
-    color: #555;
-    font-size: 16px;
-    position: relative;
-    word-break: keep-all;
-}
+        body { margin: 0; background: #fff3f6; font-family: 'DungGeunMo', monospace; display: flex; flex-direction: column; align-items: center; padding: 20px 0; }
+        canvas { width: 100%; max-width: 500px; background: #fdf6f0; border: 3px solid #e8cfcf; image-rendering: pixelated; border-radius: 10px; }
 
-/* 대사가 나올 때 깜빡이는 커서 효과 추가 (선택사항) */
-#textBox::after {
-    content: ' ▼';
-    color: #ffb6c1;
-    animation: blink 0.8s infinite;
-}
+        /* ✨ 하이라이트: 업그레이드된 텍스트박스 디자인 */
+        #textBox {
+            width: 95%;
+            max-width: 500px;
+            min-height: 130px;
+            margin-top: 20px;
+            padding: 22px;
+            
+            /* 다이어리 느낌의 핑크 그라데이션 */
+            background: linear-gradient(135deg, #ffffff 0%, #fff5f7 100%);
+            
+            /* 이중 테두리 효과 */
+            border: 4px solid #e8cfcf;
+            box-shadow: 
+                inset 0 0 0 2px #ffffff, /* 안쪽 흰색 선 */
+                5px 5px 0px rgba(232, 207, 207, 0.5); /* 바깥쪽 입체 그림자 */
+            
+            border-radius: 15px;
+            box-sizing: border-box;
+            line-height: 1.8;
+            color: #5a4f4f;
+            font-size: 16px;
+            position: relative;
+            word-break: keep-all;
+        }
 
-@keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0; }
-}</style>
+        /* 오른쪽 하단 깜빡이는 아이콘 */
+        #textBox::after {
+            content: ' ▼';
+            position: absolute;
+            bottom: 15px;
+            right: 20px;
+            color: #ffb6c1;
+            font-size: 14px;
+            animation: blink 0.8s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; transform: translateY(0); }
+            50% { opacity: 0.3; transform: translateY(2px); }
+        }
+    </style>
 </head>
 <body>
 <canvas id="game"></canvas>
@@ -125,7 +129,6 @@ canvas.addEventListener('click', (e) => {
     let nextX = player.x;
     let nextY = player.y;
 
-    // 이동 방향 결정
     if (Math.abs(clickX - player.x) > Math.abs(clickY - player.y)) {
         if (clickX > player.x) { nextX += player.step; player.direction = "right"; }
         else { nextX -= player.step; player.direction = "left"; }
@@ -134,10 +137,8 @@ canvas.addEventListener('click', (e) => {
         else { nextY -= player.step; player.direction = "back"; }
     }
 
-    // 경계 제한
     if (nextX < 30 || nextX > canvas.width - 30 || nextY < 110 || nextY > 470) return; 
 
-    // 가구 충돌 체크 (이동은 막지만 방향은 전환됨)
     let canMove = true;
     objects.forEach(obj => {
         if (nextX > obj.x - 10 && nextX < obj.x + obj.w + 10 &&
@@ -150,7 +151,6 @@ canvas.addEventListener('click', (e) => {
         player.x = nextX;
         player.y = nextY;
     }
-    
     checkProximity();
 });
 
@@ -158,11 +158,9 @@ function checkProximity() {
     objects.forEach(obj => {
         const dx = player.x - (obj.x + obj.w / 2);
         const dy = player.y - (obj.y + obj.h / 2);
-        const range = 60; // 감지 범위
+        const range = 60; 
 
         let isFacing = false;
-
-        // 캐릭터가 가구를 바라보고 있는지 체크
         if (player.direction === "right" && dx < 0 && Math.abs(dx) < range + obj.w/2 && Math.abs(dy) < obj.h/2 + 20) isFacing = true;
         if (player.direction === "left" && dx > 0 && Math.abs(dx) < range + obj.w/2 && Math.abs(dy) < obj.h/2 + 20) isFacing = true;
         if (player.direction === "front" && dy < 0 && Math.abs(dy) < range + obj.h/2 && Math.abs(dx) < obj.w/2 + 20) isFacing = true;
@@ -177,13 +175,10 @@ function checkProximity() {
 function drawLabels() {
     ctx.font = "12px 'DungGeunMo'";
     ctx.textAlign = "center";
-    
     objects.forEach(obj => {
         const labelY = obj.y + obj.h + 15;
-        // 가구 이름표 배경 (거슬리지 않게 아주 연하게)
         ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
         ctx.fillRect(obj.x + obj.w/2 - 20, labelY - 12, 40, 16);
-        // 가구 이름
         ctx.fillStyle = "#888"; 
         ctx.fillText(obj.label, obj.x + obj.w/2, labelY);
     });
@@ -205,24 +200,19 @@ function drawNameTag() {
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height);
-
-    drawLabels(); // 가구 이름표 먼저 그리기
-
+    drawLabels();
     objects.forEach(obj => {
         if (obj.imgObj.complete) {
             ctx.drawImage(obj.imgObj, obj.x, obj.y, obj.w, obj.h);
         }
     });
-
     const img = playerImages[player.direction];
     if (img.complete) {
         ctx.drawImage(img, player.x - player.size / 2, player.y - player.size / 2, player.size, player.size);
     }
-    
     drawNameTag();
     requestAnimationFrame(draw);
 }
-
 draw();
 </script>
 </body>
