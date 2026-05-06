@@ -43,14 +43,8 @@ let currentMap = "room";
 
 const messages = {
     welcome: "지수의 방에 온걸 환영해! 가구를 클릭하면 지수가 이동하며 말을 할 거야 💗",
-    tv: "어렸을때 티비를 자주봤어. 만화 위주로 봤었던 것같은데 요즘은 잘 안봐",
-    bed: "중요한 날이니까 일찍 일어나야해!",
-    table: "오빠한테 카톡보내놔야겠다",
-    bath: "얼른 준비해야지!",
-    closet: "무슨 옷을 입어야 잘 보일까?",
-    kitchen: "도시락 성공하고 싶어!",
-    bench: "여기가 사진에 표시된 그 벤치야! 여기서 기다리자.",
-    train_body: "빨간 원 영역에 있는 열차야! 정말 크지?"
+    bench: "벤치가 아주 큼직하네! 여기서 좀 쉬어갈까?",
+    train_body: "오른쪽 아래에 있는 이 열차를 타고 떠나는 거야!"
 };
 
 const mapData = {
@@ -70,14 +64,13 @@ const mapData = {
     station: {
         bg: "https://i.imgur.com/GvvmB4e.jpeg",
         objects: [
-            // 1. 벤치: 사진 하단 검은색 동그라미 위치 (중앙 하단)
-            { name: 'bench', x: 180, y: 420, w: 140, h: 60, img: "https://i.imgur.com/LM0zkps.png" }, 
-            // 2. 열차: 사진 중앙~우하단 빨간색 동그라미 위치 (크게 배치)
-            { name: 'train_body', x: 220, y: 230, w: 260, h: 180, img: "https://i.imgur.com/P0iVk3l.png" } 
+            // 1. 벤치: 화면 정중앙 배치 + 캐릭터보다 훨씬 크게 사이즈업
+            { name: 'bench', x: 170, y: 180, w: 160, h: 70, img: "https://i.imgur.com/LM0zkps.png" }, 
+            // 2. 열차: 화면 오른쪽 조금 아래로 이동 + 사이즈 확대
+            { name: 'train_body', x: 200, y: 280, w: 280, h: 180, img: "https://i.imgur.com/P0iVk3l.png" } 
         ],
-        // 열차 내부로 들어가는 판정 (빨간 원 내부)
-        door: { x: 250, y: 250, w: 200, h: 150, target: "srt_inside" },
-        bounds: { minX: 10, maxX: 490, minY: 100, maxY: 490 }
+        door: { x: 280, y: 300, w: 120, h: 100, target: "srt_inside" },
+        bounds: { minX: 20, maxX: 480, minY: 50, maxY: 480 }
     },
     srt_inside: {
         bg: "https://i.imgur.com/3N4o89c.png", 
@@ -110,7 +103,7 @@ function addText(text) {
     const box = document.getElementById('textBox');
     const newMsg = document.createElement('div');
     newMsg.className = 'msg-entry';
-    newMsg.innerHTML = text;
+    newMsg.innerText = text;
     box.appendChild(newMsg);
     box.scrollTop = box.scrollHeight;
 }
@@ -119,10 +112,8 @@ function loadMap(mapName) {
     currentMap = mapName;
     backgroundImg.src = mapData[mapName].bg;
     if(mapName === "station") {
-        player.x = 100; player.y = 280; // 사진 왼쪽 빈 공간(승강장)에서 시작
-        addText("송정역에 도착했어! 표시한 위치로 옮겼어. ✨");
-    } else if(mapName === "room") {
-        player.x = 400; player.y = 300;
+        player.x = 100; player.y = 200; // 벤치 옆에서 시작
+        addText("송정역에 도착했어! 배치를 다시 조정했어.");
     }
 }
 
@@ -151,11 +142,11 @@ function handleInteraction(e) {
     const diffX = clickX - player.x;
     const diffY = clickY - player.y;
     if (Math.abs(diffX) > Math.abs(diffY)) {
-        player.x += diffX > 0 ? player.step : -player.step;
-        player.direction = diffX > 0 ? "right" : "left";
+        player.x += (diffX > 0) ? player.step : -player.step;
+        player.direction = (diffX > 0) ? "right" : "left";
     } else {
-        player.y += diffY > 0 ? player.step : -player.step;
-        player.direction = diffY > 0 ? "front" : "back";
+        player.y += (diffY > 0) ? player.step : -player.step;
+        player.direction = (diffY > 0) ? "front" : "back";
     }
 
     const bounds = mapData[currentMap].bounds;
