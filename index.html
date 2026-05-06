@@ -24,7 +24,7 @@
 <body>
 
 <canvas id="game"></canvas>
-<div id="textBox">지수의 방에 온걸 환영해! 가구를 클릭하면 지수가 이동하며 말을 할 거야 💗</div>
+<div id="textBox">지수의 방에 온걸 환영해! 사물을 클릭하면 지수가 이동하며 말을 할 거야 💗</div>
 
 <div class="music-player">
     <div class="music-label">Now Playing: 동물의 숲 브금 🍃</div>
@@ -48,8 +48,8 @@ const messages = {
     bath: "여긴 내가 화장하는 곳이야 따로 화장대가 없어서 여기서 자주 치장해. 얼른 준비해야지!",
     closet: "이건 옷장이야. 중요한 날에는 무슨옷을 입어야 잘보일지 고민을 많이해서 지각한적이 있어",
     kitchen: "오빠한테 도시락을 만들어줘야해 하지만 한번에 성공한적이 없어",
-    bench: " 조금 일찍 도착했으니까 여기서 열차를 기다릴수 있어 ",
-    train_body: " 내가 타야하는 열차야! 일찍 도착했으니까 빨리타서 안에서 기다리자. 열차에 투명부분을 눌러봐! "
+    bench: " 벤치가 아주 넓지? 여기서 열차를 기다릴 수 있어. ",
+    train_body: " 내가 타야하는 열차야! 투명한 창문 부분을 눌러서 타보자. "
 };
 
 const mapData = {
@@ -69,11 +69,12 @@ const mapData = {
     station: {
         bg: "https://i.imgur.com/GvvmB4e.jpeg",
         objects: [
-            { name: 'bench', x: 140, y: 350, w: 180, h: 110, img: "https://i.imgur.com/LM0zkps.png" }, 
-            { name: 'train_body', x: 120, y: 200, w: 320, h: 220, img: "https://i.imgur.com/P0iVk3l.png" } 
+            // 벤치 크기 대폭 키움
+            { name: 'bench', x: 120, y: 340, w: 220, h: 130, img: "https://i.imgur.com/LM0zkps.png" }, 
+            // 열차 위치 하단으로 더 내림
+            { name: 'train_body', x: 100, y: 180, w: 350, h: 200, img: "https://i.imgur.com/P0iVk3l.png" } 
         ],
-        // 열차 투명부분 위치에 맞춘 이동문 영역
-        door: { x: 300, y: 220, w: 120, h: 100, target: "srt_inside" },
+        door: { x: 280, y: 190, w: 120, h: 100, target: "srt_inside" },
         bounds: { minX: 30, maxX: 470, minY: 320, maxY: 460 }
     },
     srt_inside: {
@@ -84,15 +85,16 @@ const mapData = {
     }
 };
 
-const backgroundImg = new Image();
 const playerImages = { front: new Image(), back: new Image(), left: new Image(), right: new Image() };
 playerImages.front.src = "https://i.imgur.com/l1ENJqo.png";
 playerImages.back.src = "https://i.imgur.com/nbzUAfX.png";
 playerImages.left.src = "https://i.imgur.com/ginoxYa.png";
 playerImages.right.src = "https://i.imgur.com/cQLW6ag.png";
 
+const backgroundImg = new Image();
 let player = { x: 250, y: 300, size: 55, step: 40, direction: "front", name: "지수" };
 
+// 이미지 로딩
 Object.values(mapData).forEach(map => {
     map.objects.forEach(obj => {
         if(obj.img) {
@@ -110,12 +112,12 @@ function loadMap(mapName) {
 
     if(mapName === "station") {
         player.x = 80; player.y = 420;
-        typeText("송정역에 도착했어! 벤치랑 열차를 클릭해봐 ✨");
+        typeText("송정역이야! 커다란 벤치랑 열차 창문을 확인해봐!");
     } else if(mapName === "room") {
         player.x = 400; player.y = 300;
     } else if(mapName === "srt_inside") {
         player.x = 250; player.y = 420;
-        typeText("열차 안이야! 투명창을 잘 눌러서 들어왔구나?");
+        typeText("열차 내부에 들어왔어! 쾌적하네 ✨");
     }
 }
 
@@ -131,17 +133,18 @@ function typeText(text) {
     }, 30);
 }
 
-// 충돌 체크 함수: 이동하려는 x, y가 오브젝트 영역 내부인지 확인
+// 충돌 감지 로직: 캐릭터가 사물 영역 안으로 아예 못 들어가게 막음
 function checkCollision(nx, ny) {
     const objects = mapData[currentMap].objects;
+    const margin = player.size / 2; // 캐릭터의 절반 크기만큼 여백을 주어 겹침 방지
+    
     for (let obj of objects) {
-        // 캐릭터 중심점 기준으로 충돌 판정 (살짝 여유를 둠)
-        if (nx > obj.x - 20 && nx < obj.x + obj.w + 20 &&
-            ny > obj.y - 10 && ny < obj.y + obj.h + 10) {
-            return true; // 충돌함
+        if (nx + margin > obj.x && nx - margin < obj.x + obj.w &&
+            ny + margin > obj.y && ny - margin < obj.y + obj.h) {
+            return true; // 사물과 겹침
         }
     }
-    return false; // 충돌 없음
+    return false;
 }
 
 function handleInteraction(e) {
@@ -154,22 +157,14 @@ function handleInteraction(e) {
     const clickX = (clientX - rect.left) * scaleX;
     const clickY = (clientY - rect.top) * scaleY;
 
-    // 1. 문 체크 (열차 투명부분 등)
+    // 1. 문/입구 체크
     const door = mapData[currentMap].door;
     if (clickX > door.x && clickX < door.x + door.w && clickY > door.y && clickY < door.y + door.h) {
         loadMap(door.target);
         return;
     }
 
-    // 2. 오브젝트 클릭 체크 (텍스트 출력용)
-    let targetObj = null;
-    mapData[currentMap].objects.forEach(obj => {
-        if (clickX > obj.x && clickX < obj.x + obj.w && clickY > obj.y && clickY < obj.y + obj.h) {
-            targetObj = obj;
-        }
-    });
-
-    // 3. 이동 처리
+    // 2. 이동 및 충돌 체크
     const diffX = clickX - player.x;
     const diffY = clickY - player.y;
     let nextX = player.x;
@@ -184,17 +179,20 @@ function handleInteraction(e) {
     }
 
     const bounds = mapData[currentMap].bounds;
-    // 맵 밖으로 나가는지 + 오브젝트와 충돌하는지 동시 체크
+    // 경계 안쪽이면서 사물과 충돌하지 않을 때만 이동
     if (nextX >= bounds.minX && nextX <= bounds.maxX && 
         nextY >= bounds.minY && nextY <= bounds.maxY &&
-        !checkCollision(nextX, ny = nextY)) {
+        !checkCollision(nextX, nextY)) {
         player.x = nextX;
         player.y = nextY;
     }
 
-    if (targetObj) {
-        typeText(messages[targetObj.name]);
-    }
+    // 3. 말풍선 띄우기 (사물 클릭 시)
+    mapData[currentMap].objects.forEach(obj => {
+        if (clickX > obj.x && clickX < obj.x + obj.w && clickY > obj.y && clickY < obj.y + obj.h) {
+            typeText(messages[obj.name]);
+        }
+    });
 }
 
 canvas.addEventListener('mousedown', handleInteraction);
